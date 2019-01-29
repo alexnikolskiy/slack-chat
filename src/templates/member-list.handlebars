@@ -1,0 +1,15 @@
+{{#each members}}
+  <li class="listitem listitem_member{{#if unread}} listitem_unread{{/if}}{{#if selected}} listitem_selected{{/if}}{{#if online}} listitem_online{{/if}}">
+    <a class="listitem__link" href="#" data-id="{{id}}">
+      <span class="listitem__name">
+        <span>{{username}}</span>
+        {{#if isLoggedUser}}
+          <span class="listitem__you">(you)</span>
+        {{/if}}
+      </span>
+      {{#if newMessages}}
+        <span class="listitem__badge">{{newMessages}}</span>
+      {{/if}}
+    </a>
+  </li>
+{{/each}}

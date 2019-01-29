@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="login-page">
+<div class="login-page__wrapper">
+  <div class="login-page__form-wrapper">
+    <form class="login-page__form login-page__form_login" action="../auth/login" method="post">
+      <div class="login-page__title">Login</div>
+      <div class="login-page__input-wrapper">
+        <input class="login-page__input" type="text" name="username" placeholder="username"/>
+      </div>
+      <div class="login-page__input-wrapper">
+        <input type="password" name="password" placeholder="password"/>
+      </div>
+      <button type="submit">login</button>
+      <p class="login-page__form-message">Not registered? <a class="login-page__link" href="#">Create an account</a></p>
+    </form>
+    <form class="login-page__form login-page__form_register" action="../auth/signup" method="post">
+      <div class="login-page__title">Register</div>
+      <div class="login-page__input-wrapper">
+        <input type="text" name="username" placeholder="username"/>
+      </div>
+      <div class="login-page__input-wrapper">
+        <input type="password" name="password" placeholder="password"/>
+      </div>
+      <div class="login-page__input-wrapper">
+        <input type="password" name="confirmPassword" placeholder="confirm password"/>
+      </div>
+      <button type="submit">register</button>
+      <p class="login-page__form-message">Already registered? <a class="login-page__link" href="#">Sign In</a></p>
+    </form>
+  </div>
+</div>
+<script src="../js/login.js"></script>
+<script src="../js/vendor.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+.chat-sidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-basis: 220px;
+  flex-shrink: 0;
+  max-width: 260px;
+  background: #4d394b;
+  z-index: 1;
+}
+
+.chat-sidebar__user {
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  flex-basis: 60px;
+  padding: 10px 10px;
+  display: flex;
+  margin-bottom: 10px;
+
+  &:hover {
+    background: $color-secondary;
+  }
+}
+
+.chat-sidebar__user-avatar {
+  width: 50px;
+  padding-right: 10px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.chat-sidebar__user-avatar-image {
+  border-radius: 3px;
+  display: block;
+}
+
+.chat-sidebar__user-name {
+  //margin-left: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chat-sidebar__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  position: relative;
+}
+
+.chat-sidebar__rooms {
+  margin-bottom: 20px;
+}
+
+.chat-sidebar__title {
+  color: #b8b0b7;
+  padding: 0 10px;
+  font-size: 16px;
+  height: 26px;
+}

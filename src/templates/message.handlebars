@@ -1,0 +1,16 @@
+<li class="message{{#if automated}} message_automated{{/if}}" data-id="{{id}}">
+  <div class="message__avatar">
+    <a class="message__sender-link" href="">
+      <img class="message__avatar-image" src="{{avatar}}">
+    </a>
+  </div>
+  <div class="message__content">
+    <div class="message__header">
+      <span class="message__sender"><a class="message__sender-link" href="">{{sender}}</a></span>
+      <span class="message__time">{{time}}</span>
+    </div>
+    <div class="message__body">
+      {{{text}}}{{#if edited}}<span class="message__edited"> (edited)</span>{{/if}}
+    </div>
+  </div>
+</li>

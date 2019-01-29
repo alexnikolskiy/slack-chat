@@ -1,0 +1,138 @@
+.listitem {
+  height: 26px;
+  font-size: 16px;
+  position: relative;
+
+  &_unread .listitem__link:visited,
+  &_unread .listitem__link:hover,
+  &_unread .listitem__link:link {
+    font-weight: 900;
+    color: #ffffff;
+  }
+
+  &_selected,
+  &_selected .listitem__link:visited,
+  &_selected .listitem__link:hover,
+  &_selected .listitem__link:link {
+    background: #4C9689;
+    color: #ffffff;
+    font-weight: 900;
+  }
+
+  &_selected .listitem__link:hover {
+    background: #4C9689;
+  }
+
+  _joined,
+  &_joined .listitem__link:visited,
+  &_joined .listitem__link:hover,
+  &_joined .listitem__link:link {
+    color: #ffffff;
+    font-weight: 900;
+  }
+
+  &_member {
+
+    &::before {
+      position: absolute;
+      content: "";
+      z-index: 2;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 10px;
+      background-color: transparent;
+      border: 2px solid $color-primary;
+      height: 5px;
+      width: 5px;
+      border-radius: 50%;
+    }
+
+    .listitem__link {
+      padding-left: 27px;
+    }
+  }
+
+  &_online {
+
+    &::before {
+      border-color: #4C9689;
+      background-color: #4C9689;
+    }
+  }
+
+  &_selected,
+  &_joined {
+
+    .listitem__icon {
+      fill: #ffffff;
+    }
+
+    &::before {
+      border-color: #ffffff;
+    }
+  }
+
+  &_online.listitem_selected::before {
+    background-color: #ffffff;
+  }
+}
+
+.listitem__section {
+  color: $color-primary;
+  padding: 0 10px;
+  //text-transform: uppercase;
+}
+
+.listitem__link {
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  line-height: 26px;
+  width: 100%;
+  text-decoration: none;
+
+  &:visited,
+  &:hover,
+  &:link {
+    color: $color-primary;
+  }
+
+  &:hover {
+    background: $color-secondary;
+  }
+}
+
+.listitem__icon {
+  margin-right: 5px;
+  fill: $color-primary;
+}
+
+.listitem__name {
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+
+  &_lower {
+    text-transform: lowercase;
+  }
+}
+
+.listitem__badge {
+  color: #ffffff;
+  background: #eb4d5c;
+  border-radius: 9px;
+  padding: 2px 9px;
+  font-size: 0.8em;
+  line-height: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  margin-left: 5px;
+}
+
+.listitem__you {
+  margin-left: 4px;
+  font-weight: 400;
+  opacity: 0.7;
+}
