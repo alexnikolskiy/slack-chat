@@ -1,0 +1,30 @@
+<div class="message__action-list">
+  {{#if isOwnMessage}}
+    {{#unless isAutomated}}
+      <button class="message__action message__action_edit" data-action="edit">
+        <svg class="message__action-icon" width="20" height="20" aria-labelledby="action-edit">
+          <title id="action-edit">Edit message</title>
+          <use xlink:href="#edit"></use>
+        </svg>
+      </button>
+    {{/unless}}
+  {{/if}}
+  {{#if isOwnMessage}}
+    {{#unless isAutomated}}
+      <button class="message__action message__action_delete" data-action="delete">
+        <svg class="message__action-icon" width="20" height="20" aria-labelledby="action-delete">
+          <title id="action-delete">Delete message</title>
+          <use xlink:href="#delete"></use>
+        </svg>
+      </button>
+    {{/unless}}
+  {{/if}}
+  {{#unless isAutomated}}
+  <button class="message__action message__action_speak" data-action="speak">
+    <svg class="message__action-icon" width="20" height="20" aria-labelledby="action-speak">
+      <title id="action-speak">Speak message</title>
+      <use xlink:href="#speakers"></use>
+    </svg>
+  </button>
+  {{/unless}}
+</div>

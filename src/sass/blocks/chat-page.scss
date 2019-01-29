@@ -1,0 +1,16 @@
+.chat-page {
+  min-width: 768px;
+  background: #ffffff;
+  color: #2c2d30;
+  padding: 0;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  font-family: Roboto;
+}
+
+.chat-page__container {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
+}

@@ -1,0 +1,10 @@
+<div class="message-form__input-wrapper">
+  <textarea class="message-form__input" name="text" rows="1"></textarea>
+  {{#if canSpeechRecognize}}
+  <button class="message-form__button message-form__button_record">
+    <svg class="message-form__icon" width="20" height="20">
+      <use xlink:href="#microphone"></use>
+    </svg>
+  </button>
+  {{/if}}
+</div>

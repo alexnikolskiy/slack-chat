@@ -1,0 +1,17 @@
+.notification-bar {
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+.notification-bar__text {
+  display: block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  height: 16px;
+  font-size: 11px;
+  line-height: 16px;
+  color: #616061;
+}

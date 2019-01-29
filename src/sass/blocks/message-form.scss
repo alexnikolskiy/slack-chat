@@ -1,0 +1,58 @@
+.message-form {
+
+}
+
+.message-form__input-wrapper {
+  height: auto;
+  max-height: none;
+  min-height: 42px;
+  outline: 0;
+  box-shadow: none;
+  overflow: auto;
+  margin: 0;
+  width: 100%;
+  border: 2px solid rgba(145,145,147,0.7);
+  border-radius: 6px;
+  background: #fff;
+  color: #2c2d30;
+  display: flex;
+  padding: 0 6px;
+
+  &_focus {
+    border-color: #717274;
+  }
+}
+
+.message-form__input {
+  border: 0;
+  outline: 0;
+  resize: none;
+  padding: 9px 4px;
+  //height: 38px;
+  flex: 1;
+  overflow-y: auto;
+  line-height: 22px;
+}
+
+.message-form__button {
+  border: 0;
+  background: 0;
+  cursor: pointer;
+  outline: 0;
+  align-self: flex-end;
+  font-size: 0;
+  padding: 10px 5px;
+
+  &:hover {
+
+    .message-form__icon {
+      fill: #e60000;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.message-form__icon {
+  fill: #717274;
+  transition: transform 0.2s;
+}

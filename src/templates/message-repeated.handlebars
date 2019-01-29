@@ -1,0 +1,10 @@
+<li class="message message_repeated{{#if automated}} message_automated{{/if}}" data-id="{{id}}">
+  <div class="message__avatar">
+    <span class="message__time">{{time}}</span>
+  </div>
+  <div class="message__content">
+    <div class="message__body">
+      {{{text}}}{{#if edited}}<span class="message__edited"> (edited)</span>{{/if}}
+    </div>
+  </div>
+</li>

@@ -1,0 +1,13 @@
+{{#each rooms}}
+  <li class="listitem{{#if selected}} listitem_selected{{/if}}{{#if joined}} listitem_joined{{/if}}">
+    <a class="listitem__link" href="#" data-id="{{id}}">
+      <svg class="listitem__icon" width="12" height="12">
+        <use xlink:href="#hashtag"></use>
+      </svg>
+      <span class="listitem__name listitem__name_lower">{{name}}</span>
+      {{#if newMessages}}
+        <span class="listitem__badge">{{newMessages}}</span>
+      {{/if}}
+    </a>
+  </li>
+{{/each}}

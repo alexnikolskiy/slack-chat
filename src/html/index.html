@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="chat-page">
+  <div style="display:none">
+    <include src="build/img/sprite.svg"></include>
+  </div>
+  <div class="chat-page__container">
+    <aside class="chat-sidebar">
+      <div class="chat-sidebar__user"></div>
+      <div class="chat-sidebar__list">
+        <div class="chat-sidebar__title">Rooms</div>
+        <ul class="chat-sidebar__rooms"></ul>
+        <div class="chat-sidebar__title">Members</div>
+        <ul class="chat-sidebar__members"></ul>
+      </div>
+    </aside>
+    <main class="chat-box">
+      <header class="chat-box__header"></header>
+      <div class="chat-box__body">
+        <ul class="chat-box__body-list"></ul>
+      </div>
+      <footer class="chat-box__footer">
+        <form class="message-form" action="/"></form>
+        <div class="notification-bar"></div>
+      </footer>
+    </main>
+  </div>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="js/vendor.js"></script>
+  <script src="js/chat.js"></script>
+</body>
+</html>
