@@ -1,3 +1,3 @@
 import config from '../../../config';
 
-export default io(`${config.socket.url}`, config.socket.options);
+export default window.io(`${config.socket.url}`, config.socket.options);

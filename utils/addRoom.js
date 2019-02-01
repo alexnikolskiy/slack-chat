@@ -5,10 +5,11 @@ const config = require('../config');
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
-const dbUrl =
-  `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
+const dbUrl = `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${
+  config.db.port
+}/${config.db.name}`;
 
 mongoose.connect(dbUrl, {
   useNewUrlParser: true,
@@ -17,7 +18,7 @@ mongoose.connect(dbUrl, {
 
 let roomName = '';
 
-rl.question('Room name: ', (answer) => {
+rl.question('Room name: ', answer => {
   roomName = answer;
   rl.close();
 });

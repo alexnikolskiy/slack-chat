@@ -2,13 +2,18 @@ import moment from 'moment';
 import template from 'Templates/message-repeated';
 
 class MessageRepeatedOutput {
+  constructor() {
+    this.message = null;
+    this.template = document.createElement('template');
+  }
+
   output(message = {}) {
-    const div = document.createElement(div);
+    this.message = message;
 
-    message.time = moment(message.timestamp).format('LT');
-    div.innerHTML = template(message);
+    this.message.time = moment(this.message.timestamp).format('LT');
+    this.template.innerHTML = template(message);
 
-    return div.firstElementChild;
+    return this.template.content.firstChild;
   }
 }
 

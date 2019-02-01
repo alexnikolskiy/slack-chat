@@ -1,6 +1,6 @@
 import template from 'Templates/notification-bar';
 import io from 'Utils/io';
-import pubsub from "Utils/pubsub";
+import pubsub from 'Utils/pubsub';
 
 class NotificationBar {
   constructor() {
@@ -18,16 +18,15 @@ class NotificationBar {
     io.on('login', this.ioLogin.bind(this));
   }
 
-  getTypingText(users) {
+  static getTypingText(users) {
     let text = '';
+    const userList = users.map(user => `<b>${user}</b>`);
 
-    users = users.map(user => `<b>${user}</b>`);
-
-    if (users.length === 1) {
-      text = users[0] + ' is typing';
-    } else if (users.length === 2) {
-      text = users.join(' and ') + ' are typing';
-    } else if (users.length > 2) {
+    if (userList.length === 1) {
+      text = `${userList[0]} is typing`;
+    } else if (userList.length === 2) {
+      text = `${userList.join(' and ')} are typing`;
+    } else if (userList.length > 2) {
       text = 'Several people are typing';
     }
 
@@ -35,24 +34,25 @@ class NotificationBar {
   }
 
   handleTyping(users, sender = null, receiver = null) {
+    let userList = [...users];
 
     if (!receiver) {
-      users = users.filter(user => user !== this.user.username);
+      userList = userList.filter(user => user !== this.user.username);
     }
 
     if (this.isPrivate && receiver) {
       if (receiver === this.user.username && this.user.username !== this.member.username) {
-        users = users.filter(user => user !== receiver);
+        userList = userList.filter(user => user !== receiver);
       } else {
-        users = [];
+        userList = [];
       }
     } else if (!this.isPrivate && receiver) {
-      users = users.filter(user => user !== sender);
+      userList = userList.filter(user => user !== sender);
     } else if (this.isPrivate && !receiver) {
-      users = users.filter(user => user === receiver);
+      userList = userList.filter(user => user === receiver);
     }
 
-    this.text = this.getTypingText(users);
+    this.text = NotificationBar.getTypingText(userList);
     this.render();
   }
 

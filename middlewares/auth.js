@@ -3,7 +3,7 @@ function isAuth(req, res, next) {
     return next();
   }
 
-  res.redirect('/auth/login');
+  return res.redirect('/auth/login');
 }
 
 function isNotAuth(req, res, next) {
@@ -11,7 +11,7 @@ function isNotAuth(req, res, next) {
     return next();
   }
 
-  res.redirect('/');
+  return res.redirect('/');
 }
 
 module.exports = {

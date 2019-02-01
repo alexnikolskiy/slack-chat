@@ -6,7 +6,7 @@ class DeleteCommand {
   }
 
   execute() {
-    let result = confirm('Are you sure?');
+    const result = window.confirm('Are you sure?');
 
     if (result) {
       this.message.deleted = true;

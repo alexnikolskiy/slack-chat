@@ -10,7 +10,7 @@ module.exports = {
       rooms = await Room.find();
       rooms = rooms.map(room => ({
         id: room._id,
-        name: room.name
+        name: room.name,
       }));
 
       res.status(200).json({ success: true, data: rooms });
@@ -40,7 +40,7 @@ module.exports = {
     try {
       let members = [];
 
-      members = await User.find({ 'room': req.params.id });
+      members = await User.find({ room: req.params.id });
       members = members.map(member => ({
         id: member._id,
         username: member.username,
@@ -56,14 +56,14 @@ module.exports = {
   async getMessages(req, res) {
     try {
       let messages = [];
-      const yesterday = new Date;
+      const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
       messages = await Message.find({
-        'room': req.params.id,
-        'receiver': null,
-        'timestamp': {
-          $gte: yesterday
+        room: req.params.id,
+        receiver: null,
+        timestamp: {
+          $gte: yesterday,
         },
       })
         .populate('sender')
@@ -87,26 +87,20 @@ module.exports = {
   },
   async getPrivateMessages(req, res) {
     try {
-      const yesterday = new Date;
+      const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      messages = await Message.find({
+      let messages = await Message.find({
         $and: [
-          { 'room': req.params.id, },
-          { 'timestamp': { $gte: yesterday }, },
+          { room: req.params.id },
+          { timestamp: { $gte: yesterday } },
           {
             $or: [
               {
-                $and: [
-                  { 'sender': req.session.user },
-                  { 'receiver': req.params.receiver },
-                ]
+                $and: [{ sender: req.session.user }, { receiver: req.params.receiver }],
               },
               {
-                $and: [
-                  { 'sender': req.params.receiver, },
-                  { 'receiver': req.session.user, },
-                ]
+                $and: [{ sender: req.params.receiver }, { receiver: req.session.user }],
               },
             ],
           },
@@ -132,5 +126,5 @@ module.exports = {
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
-  }
+  },
 };

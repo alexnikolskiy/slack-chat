@@ -7,56 +7,58 @@ import SaveCommand from '../commands/saveCommand';
 class MessageEditOutput {
   constructor() {
     this.message = null;
+    this.template = document.createElement('template');
   }
 
-  setHandlers(elem) {
-    const input = elem.querySelector('.message__editor-input');
-    const buttonsContainer = elem.querySelector('.message__editor-footer');
+  setHandlers() {
+    const input = this.template.content.querySelector('.message__editor-input');
+    const buttonsContainer = this.template.content.querySelector('.message__editor-footer');
 
-    input.addEventListener('focus', (ev) => {
+    input.addEventListener('focus', ev => {
       ev.target.parentElement.classList.add('message__editor-input-container_focus');
     });
-    input.addEventListener('blur', (ev) => {
+
+    input.addEventListener('blur', ev => {
       ev.target.parentElement.classList.remove('message__editor-input-container_focus');
     });
-    input.addEventListener('input', throttle(onInput, 400), false);
 
     function onInput(ev) {
       const maxHeight = Math.ceil(window.innerHeight / 4);
 
       if (ev.target.scrollHeight <= maxHeight - 20) {
         ev.target.style.height = 'auto';
-        ev.target.style.height = (ev.target.scrollHeight) + 'px';
+        ev.target.style.height = `${ev.target.scrollHeight}px`;
       }
     }
 
-    input.addEventListener('keydown', (ev) => {
+    input.addEventListener('input', throttle(onInput, 400), false);
+
+    input.addEventListener('keydown', ev => {
       if (ev.keyCode === 13) {
         if (ev.ctrlKey) {
-          input.value = input.value + '\n';
+          input.value += '\n';
           onInput(ev);
         } else {
           ev.preventDefault();
-          // input.value = input.value.replace(/\r?\n/g, '<br>');
-          // io.emit('message:save', messageId, input.value);
-          //   this.message.text = input.value;
-          let command = new SaveCommand(this.message, input.value);
+          const command = new SaveCommand(this.message, input.value);
           command.execute();
           input.value = '';
           onInput(ev);
         }
       } else if (ev.keyCode === 27) {
-        let command = new CancelCommand(this.message);
+        const command = new CancelCommand(this.message);
         command.execute();
       }
     });
 
-    buttonsContainer.addEventListener('click', (ev) => {
+    buttonsContainer.addEventListener('click', ev => {
       const button = ev.target.closest('.button');
 
-      if (!button) { return; }
+      if (!button) {
+        return;
+      }
 
-      const action = button.dataset.action;
+      const { action } = button.dataset;
       let command;
 
       switch (action) {
@@ -67,21 +69,23 @@ class MessageEditOutput {
           this.message.text = input.value;
           command = new SaveCommand(this.message, input.value);
           break;
+        default:
+          break;
       }
 
+      if (command) {
         command.execute();
+      }
     });
   }
 
   output(message = {}) {
-    const div = document.createElement(div);
-
     this.message = message;
-    message.text = message.text.replace(/<br>/g, '\n');
-    div.innerHTML = template(message);
-    this.setHandlers(div.firstElementChild);
+    this.message.text = this.message.text.replace(/<br>/g, '\n');
+    this.template.innerHTML = template(message);
+    this.setHandlers();
 
-    return div.firstElementChild;
+    return this.template.content.firstChild;
   }
 }
 

@@ -6,7 +6,7 @@ module.exports = {
       let users = [];
 
       users = await User.find();
-      users = rooms.map(user => ({
+      users = users.map(user => ({
         id: user._id,
         username: user.name,
         online: user.online,
