@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 const bcrypt = require('bcrypt');
 
 const UserSchema = new Schema({
@@ -25,12 +26,12 @@ const UserSchema = new Schema({
   },
 });
 
-UserSchema.methods.generateHash = async (password) => (
-  await bcrypt.hash(password, 10)
-);
+UserSchema.methods.generateHash = async password => {
+  await bcrypt.hash(password, 10);
+};
 
-UserSchema.methods.validatePassword = async function(password) {
-  return await bcrypt.compare(password, this.password)
+UserSchema.methods.validatePassword = async function validate(password) {
+  await bcrypt.compare(password, this.password);
 };
 
 module.exports = mongoose.model('User', UserSchema);

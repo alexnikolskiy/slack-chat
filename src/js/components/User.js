@@ -3,7 +3,7 @@ import io from 'Utils/io';
 
 class User {
   constructor() {
-    this.elem = document.querySelector('.chat-sidebar__user')
+    this.elem = document.querySelector('.chat-sidebar__user');
     this.user = null;
 
     io.on('login', this.ioLogin.bind(this));
@@ -15,7 +15,9 @@ class User {
   }
 
   render() {
-    if (!this.user) { return; }
+    if (!this.user) {
+      return;
+    }
 
     this.elem.innerHTML = template({
       username: this.user.username,

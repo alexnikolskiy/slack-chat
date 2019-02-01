@@ -3,24 +3,30 @@ import template from 'Templates/message';
 import pubsub from 'Utils/pubsub';
 
 class MessageOutput {
-  setHandlers(elem, message) {
-    const links = elem.querySelectorAll('.message__sender-link');
+  constructor() {
+    this.message = null;
+    this.template = document.createElement('template');
+  }
 
-    [...links].forEach(link => link.addEventListener('click', (ev) => {
-      ev.preventDefault();
+  setHandlers() {
+    const links = this.template.content.querySelectorAll('.message__sender-link');
 
-      pubsub.pub('message:select-user', message.sender);
-    }));
+    [...links].forEach(link =>
+      link.addEventListener('click', ev => {
+        ev.preventDefault();
+
+        pubsub.pub('message:select-user', this.message.sender);
+      }),
+    );
   }
 
   output(message = {}) {
-    const div = document.createElement(div);
+    this.message = message;
+    this.message.time = moment(this.message.timestamp).format('LT');
+    this.template.innerHTML = template(this.message);
+    this.setHandlers();
 
-    message.time = moment(message.timestamp).format('LT');
-    div.innerHTML = template(message);
-    this.setHandlers(div.firstElementChild, message);
-
-    return div.firstElementChild;
+    return this.template.content.firstChild;
   }
 }
 

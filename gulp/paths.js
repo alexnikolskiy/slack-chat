@@ -13,5 +13,5 @@ module.exports = {
     img: 'build/img',
     js: 'build/js',
     templates: 'src/templates/build',
-  }
+  },
 };

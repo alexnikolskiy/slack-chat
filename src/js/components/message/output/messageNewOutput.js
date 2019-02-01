@@ -1,12 +1,16 @@
 import template from 'Templates/message-new';
 
 class MessageNewOutput {
+  constructor() {
+    this.message = null;
+    this.template = document.createElement('template');
+  }
+
   output(message = {}) {
-    const div = document.createElement(div);
+    this.message = message;
+    this.template.innerHTML = template(message);
 
-    div.innerHTML = template(message);
-
-    return div.firstElementChild;
+    return this.template.content.firstChild;
   }
 }
 

@@ -32,31 +32,34 @@ class Editor {
     const buttonRecord = this.elem.querySelector('.message-form__button_record');
 
     input.focus();
-    input.addEventListener('focus', (ev) => {
+    input.addEventListener('focus', ev => {
       ev.target.parentElement.classList.add('message-form__input-wrapper_focus');
     });
-    input.addEventListener('blur', (ev) => {
+
+    input.addEventListener('blur', ev => {
       ev.target.parentElement.classList.remove('message-form__input-wrapper_focus');
     });
-
-    input.setAttribute('style', 'height:' + (input.scrollHeight) + 'px;');
-    input.addEventListener('input', throttle(onInput, 400), false);
 
     function onInput(ev) {
       const maxHeight = Math.ceil(window.innerHeight / 2);
 
       if (ev.target.scrollHeight <= maxHeight - 20) {
-        ev.target.style.height = 'auto';
-        ev.target.style.height = (ev.target.scrollHeight) + 'px';
+        const { target } = ev;
+
+        target.style.height = 'auto';
+        target.style.height = `${target.scrollHeight}px`;
       }
     }
 
+    input.setAttribute('style', `height: ${input.scrollHeight}px;`);
+    input.addEventListener('input', throttle(onInput, 400), false);
+
     const onStopTyping = debounce(() => io.emit('editor:stop-typing', this.receiver), 1500);
 
-    input.addEventListener('keydown', (ev) => {
+    input.addEventListener('keydown', ev => {
       if (ev.keyCode === 13) {
         if (ev.ctrlKey) {
-          input.value = input.value + '\n';
+          input.value += '\n';
           onInput(ev);
           pubsub.pub('editor:new-line');
         } else {
@@ -71,7 +74,7 @@ class Editor {
       }
     });
 
-    input.addEventListener('keypress', (ev) => {
+    input.addEventListener('keypress', () => {
       io.emit('editor:typing', this.receiver);
       onStopTyping();
     });
@@ -79,26 +82,26 @@ class Editor {
     if (buttonRecord) {
       let text = '';
 
-      buttonRecord.addEventListener('click', (ev) => {
+      buttonRecord.addEventListener('click', ev => {
         ev.preventDefault();
       });
 
-      buttonRecord.addEventListener('mousedown', (ev) => {
+      buttonRecord.addEventListener('mousedown', () => {
         this.recognition.start();
         text = input.value;
         input.value = '';
-        input.placeholder = 'Listening...'
+        input.placeholder = 'Listening...';
       });
 
-      buttonRecord.addEventListener('mouseup', (ev) => {
+      buttonRecord.addEventListener('mouseup', () => {
         this.recognition.stop();
         input.placeholder = '';
         input.value = text;
       });
 
-      this.recognition.addEventListener('result', (ev) => {
+      this.recognition.addEventListener('result', ev => {
         input.value = ev.results[0][0].transcript;
-      })
+      });
     }
   }
 

@@ -35,8 +35,8 @@ class RoomList {
   setHandlers() {
     const links = this.elem.querySelectorAll('.listitem__link');
 
-    [...links].forEach((link) => {
-      link.addEventListener('click', (ev) => {
+    [...links].forEach(link => {
+      link.addEventListener('click', ev => {
         ev.preventDefault();
 
         this.selectRoom(ev.currentTarget.dataset.id);
@@ -45,13 +45,15 @@ class RoomList {
   }
 
   selectRoom(id) {
-    if (id === this.selected) { return; }
+    if (id === this.selected) {
+      return;
+    }
     this.selected = id;
 
     this.onSelectRoom(id);
   }
 
-  selectMember(id) {
+  selectMember() {
     this.selected = null;
     this.lastVisit = Date.now();
     this.render();
@@ -62,17 +64,19 @@ class RoomList {
     this.selectRoom(user.room);
   }
 
-  onSelectRoom(id) {
-    const room = this.rooms.find(room => room.id === this.selected);
+  onSelectRoom() {
+    const room = this.rooms.find(r => r.id === this.selected);
 
-    if (!room) { return; }
+    if (!room) {
+      return;
+    }
 
     pubsub.pub('room:select', room, this.lastVisit);
 
     this.lastVisit = Date.now();
     room.newMessages = 0;
 
-    if (this.joined !== this.selected ) {
+    if (this.joined !== this.selected) {
       io.emit('room:join', room.id);
       this.joined = room.id;
     } else {
@@ -82,7 +86,7 @@ class RoomList {
   }
 
   handleNewMessage(roomId) {
-    const room = this.rooms.find(room => room.id === roomId);
+    const room = this.rooms.find(r => r.id === roomId);
 
     room.newMessages += 1;
     this.render();
@@ -93,7 +97,6 @@ class RoomList {
       ...room,
       selected: room.id === this.selected,
       joined: room.id === this.joined,
-
     }));
 
     this.elem.innerHTML = roomsTemplate({ rooms });

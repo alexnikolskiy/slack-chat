@@ -30,7 +30,7 @@ class Message {
     this.editing = false;
     this.hasChanges = false;
     this.deleted = false;
-    this.avatar = avatar ? avatar : `https://api.adorable.io/avatars/72/${this.sender}.png`;
+    this.avatar = avatar || `https://api.adorable.io/avatars/72/${this.sender}.png`;
   }
 
   renderActions(data) {
@@ -44,12 +44,14 @@ class Message {
   }
 
   setActionsHandlers(elem) {
-    elem.addEventListener('click', (ev) => {
+    elem.addEventListener('click', ev => {
       const button = ev.target.closest('.message__action');
 
-      if (!button) { return; }
+      if (!button) {
+        return;
+      }
 
-      const action = button.dataset.action;
+      const { action } = button.dataset;
       let command;
 
       switch (action) {
@@ -61,6 +63,8 @@ class Message {
           break;
         case 'speak':
           command = new SpeakCommand(this);
+          break;
+        default:
           break;
       }
 

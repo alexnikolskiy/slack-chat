@@ -16,9 +16,9 @@ class App {
   }
 
   render() {
-    for (let component of this.components) {
+    this.components.forEach(component => {
       component.render();
-    }
+    });
   }
 }
 

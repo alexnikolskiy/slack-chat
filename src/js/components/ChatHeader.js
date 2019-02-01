@@ -61,10 +61,11 @@ class ChatHeader {
   }
 
   ioChangeStatus({ online }) {
-    console.log('status', online);
+    const status = online ? 'online' : 'offline';
+
     this.state = {
       ...this.state,
-      info: this.state.isMember ? (online ? 'online' : 'offline') : this.state.info,
+      info: this.state.isMember ? status : this.state.info,
       online,
     };
     this.render();

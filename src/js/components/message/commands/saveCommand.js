@@ -7,7 +7,6 @@ class SaveCommand {
   }
 
   execute() {
-
     this.value = this.value.replace(/\r?\n/g, '<br>');
 
     const hasChanges = this.message.text !== this.value;
