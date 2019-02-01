@@ -21,9 +21,12 @@
     "babel-loader": "^8.0.5",
     "browser-sync": "^2.26.3",
     "del": "^3.0.0",
-    "eslint": "^5.12.0",
+    "eslint": "^5.3.0",
     "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.0.0",
+    "eslint-import-resolver-webpack": "^0.11.0",
     "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-prettier": "^3.0.1",
     "gulp": "^4.0.0",
     "gulp-autoprefixer": "^6.0.0",
     "gulp-clean-css": "^4.0.0",
@@ -41,9 +44,12 @@
     "gulp-sourcemaps": "^2.6.4",
     "gulp-stylelint": "^8.0.0",
     "gulp-svgstore": "^7.0.1",
+    "husky": "^1.3.1",
+    "lint-staged": "^8.1.1",
     "node-normalize-scss": "^8.0.0",
     "nodemon": "^1.18.9",
     "posthtml-include": "^1.2.0",
+    "prettier": "^1.16.3",
     "stylelint": "^9.9.0",
     "stylelint-config-airbnb": "0.0.0",
     "stylelint-order": "^2.0.0",
@@ -54,15 +60,24 @@
   },
   "scripts": {
     "stylelint": "stylelint src/sass/**/*.scss || exit 0",
-    "codestyle": "eslint",
-    "start": "nodemon --ignore src/ --ignore build/ server.js",
-    "dev": "npx gulp dev",
-    "build": "npx gulp build --release"
+    "eslint": "eslint **/*.js",
+    "eslint:fix": "eslint **/*.js --fix",
+    "start": "cross-env NODE_ENV=development nodemon --ignore src/ --ignore build/ server.js",
+    "dev": "cross-env NODE_ENV=development npx gulp dev",
+    "build": "cross-env NODE_ENV=production npx gulp build --release"
   },
   "author": "Alexander Nikolskiy",
   "license": "ISC",
   "browserslist": [
     "last 2 version",
     "> 1%"
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": ["npm run eslint:fix", "git add"]
+  }
 }

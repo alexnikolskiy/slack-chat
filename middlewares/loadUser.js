@@ -5,7 +5,7 @@ module.exports = async (req, res, next) => {
 
   try {
     req.user = await User.findById(req.session.user);
-    next();
+    return next();
   } catch (err) {
     return next(err);
   }

@@ -37,26 +37,30 @@ class Chat {
   }
 
   setHandlers() {
-    this.elem.addEventListener('mouseover', (ev) => {
+    this.elem.addEventListener('mouseover', ev => {
       const messageElem = ev.target.closest('.message');
 
-      if (!messageElem || messageElem.classList.contains('message_editing')) { return; }
+      if (!messageElem || messageElem.classList.contains('message_editing')) {
+        return;
+      }
 
       const messageId = messageElem.dataset.id;
       const actionsElem = messageElem.getElementsByClassName('message__action-list')[0];
 
       if (!actionsElem && messageId) {
-        const message = this.messages.find(message => message.id === messageId);
+        const message = this.messages.find(msg => msg.id === messageId);
         const isOwnMessage = message.sender === this.sender.username;
 
         messageElem.append(message.renderActions({ isOwnMessage, isAutomated: message.automated }));
       }
     });
 
-    this.elem.addEventListener('mouseout', (ev) => {
+    this.elem.addEventListener('mouseout', ev => {
       const messageElem = ev.target.closest('.message');
 
-      if (!messageElem || messageElem.classList.contains('message_editing') || !ev.relatedTarget) { return; }
+      if (!messageElem || messageElem.classList.contains('message_editing') || !ev.relatedTarget) {
+        return;
+      }
 
       const where = ev.relatedTarget.closest('.message__action-list');
       const elems = this.elem.querySelectorAll('.message__action-list');
@@ -68,23 +72,30 @@ class Chat {
       });
     });
 
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes.length > 1) { return; }
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.addedNodes.length > 1) {
+          return;
+        }
 
         const elem = mutation.addedNodes[0];
-        if (!elem || !elem.classList.contains('message_editing')) { return; }
+        if (!elem || !elem.classList.contains('message_editing')) {
+          return;
+        }
 
         const input = elem.querySelector('.message__editor-input');
-        input.setAttribute('style', 'height:' + (input.scrollHeight) + 'px;');
+        input.setAttribute('style', `height:${input.scrollHeight}px;`);
         input.focus();
-        setTimeout(function(){ input.selectionStart = input.selectionEnd = input.value.length; }, 0);
-      })
+        setTimeout(() => {
+          input.selectionStart = input.value.length;
+          input.selectionEnd = input.value.length;
+        }, 0);
+      });
     });
 
     observer.observe(this.elem, {
-      childList: true
-    })
+      childList: true,
+    });
   }
 
   ioLogin(user) {
@@ -121,38 +132,51 @@ class Chat {
         pubsub.pub('message:new-private', message.sender);
       } else if (this.receiver && !isPrivate) {
         pubsub.pub('message:new', message.room);
-      } else if (this.receiver && isPrivate && this.sender.username !== message.sender && this.receiver.username !== message.sender) {
+      } else if (
+        this.receiver &&
+        isPrivate &&
+        this.sender.username !== message.sender &&
+        this.receiver.username !== message.sender
+      ) {
         pubsub.pub('message:new-private', message.sender);
       }
     }
 
-    if ((!this.receiver && isPrivate
-      || this.receiver && this.receiver.username !== message.sender
-      || this.receiver && !isPrivate)
-    && (this.sender.username !== message.sender)) { return; }
+    if (
+      ((!this.receiver && isPrivate) ||
+        (this.receiver && this.receiver.username !== message.sender) ||
+        (this.receiver && !isPrivate)) &&
+      this.sender.username !== message.sender
+    ) {
+      return;
+    }
 
-    message.read = true;
     io.emit('message:read', message.id);
+    message.read = true;
     this.messages.push(new Message(message));
 
     this.render();
   }
 
   ioEditMessage(message) {
-    const msg = this.messages.find(msg => msg.id === message.id);
+    const findMessage = this.messages.find(msg => msg.id === message.id);
 
-    if (!msg) { return; }
+    if (!findMessage) {
+      return;
+    }
 
-    msg.text = message.text;
-    msg.edited = true;
-    msg.hasChanges = true;
+    findMessage.text = message.text;
+    findMessage.edited = true;
+    findMessage.hasChanges = true;
     this.render();
   }
 
   ioDeleteMessage(id) {
     const message = this.messages.find(msg => msg.id === id);
 
-    if (!message) { return; }
+    if (!message) {
+      return;
+    }
 
     this.elem.removeChild(message.elem);
     const idx = this.messages.findIndex(msg => msg.id === id);
@@ -166,11 +190,13 @@ class Chat {
   async loadMessages(room) {
     const messages = await getRoomMessages(room.id);
 
-    this.messages = messages
-      .map(message => new Message({
-        ...message,
-        read: new Date(message.timestamp).getTime() <= new Date(this.lastVisit).getTime(),
-      }));
+    this.messages = messages.map(
+      message =>
+        new Message({
+          ...message,
+          read: new Date(message.timestamp).getTime() <= new Date(this.lastVisit).getTime(),
+        }),
+    );
     this.render(true);
   }
 
@@ -178,11 +204,11 @@ class Chat {
     this.lastVisit = lastVisit;
   }
 
-  editMessage(message) {
+  editMessage() {
     this.render();
   }
 
-  cancelEditMessage(message) {
+  cancelEditMessage() {
     this.render();
   }
 
@@ -198,7 +224,9 @@ class Chat {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .find(msg => msg.sender === this.sender.username && !msg.automated);
 
-    if (!message) { return; }
+    if (!message) {
+      return;
+    }
 
     message.editing = true;
     message.hasChanges = true;
@@ -221,10 +249,13 @@ class Chat {
   async selectMember(member) {
     const messages = await getPrivateMessages(this.sender.room, member.id);
 
-    this.messages = messages.map(message => new Message({
-      ...message,
-      read: new Date(message.timestamp).getTime() <= new Date(member.lastVisit).getTime(),
-    }));
+    this.messages = messages.map(
+      message =>
+        new Message({
+          ...message,
+          read: new Date(message.timestamp).getTime() <= new Date(member.lastVisit).getTime(),
+        }),
+    );
     this.receiver = member;
     this.render(true);
   }
@@ -242,15 +273,19 @@ class Chat {
     const parentElem = this.elem.parentElement;
     const lastMessage = this.messages[this.messages.length - 1];
 
-    if (!lastMessage) { return; }
+    if (!lastMessage) {
+      return;
+    }
 
     const lastElem = lastMessage.elem;
     const height = parentElem.scrollTop + parentElem.clientHeight + lastElem.clientHeight;
 
-    if (height === parentElem.scrollHeight
-      || parentElem.scrollTop === 0
-      || lastMessage.sender === this.sender.username
-      || clear) {
+    if (
+      height === parentElem.scrollHeight ||
+      parentElem.scrollTop === 0 ||
+      lastMessage.sender === this.sender.username ||
+      clear
+    ) {
       parentElem.scrollTop = parentElem.scrollHeight;
     }
   }

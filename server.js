@@ -1,5 +1,7 @@
 const express = require('express');
+
 const app = express();
+
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
@@ -15,10 +17,11 @@ const { isAuth } = require('./middlewares/auth');
 const loadUser = require('./middlewares/loadUser');
 const authRouter = require('./routes/auth');
 const apiRouter = require('./routes/api');
-const socket = require('./socket')(io);
+const socketio = require('./socket')(io);
 
-let dbUrl =
-  `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
+let dbUrl = `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${
+  config.db.port
+}/${config.db.name}`;
 
 if (config.db.options) {
   dbUrl += `?${config.db.options}`;
@@ -30,18 +33,22 @@ mongoose.connect(dbUrl, {
 });
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  }),
+);
 app.use(morgan('dev'));
 
-app.use(cors({
-  origin: [
-    `http://${config.http.host}:${config.http.port}`,
-    `http://${config.http.host}:${config.http.devPort}`,
-  ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      `http://${config.http.host}:${config.http.port}`,
+      `http://${config.http.host}:${config.http.devPort}`,
+    ],
+    credentials: true,
+  }),
+);
 
 const sessionMiddleware = session({
   key: 'chat.sid',
@@ -51,11 +58,11 @@ const sessionMiddleware = session({
   cookie: {
     path: '/',
     httpOnly: true,
-    maxAge: null
+    maxAge: null,
   },
   store: new MongoStore({
-    mongooseConnection: mongoose.connection
-  })
+    mongooseConnection: mongoose.connection,
+  }),
 });
 
 app.use(sessionMiddleware);
@@ -70,10 +77,10 @@ app.use(loadUser);
 app.use('/auth', authRouter);
 app.use('/api', apiRouter);
 
-io.use(function(socket, next) {
+io.use((socket, next) => {
   sessionMiddleware(socket.request, socket.request.res, next);
 });
-socket.init();
+socketio.init();
 
 http.listen(config.http.port, config.http.host, () => {
   console.log('Express server started on %s:%s', config.http.host, config.http.port);

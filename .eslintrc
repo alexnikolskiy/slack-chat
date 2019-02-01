@@ -1,9 +1,36 @@
 {
-  "extends": "airbnb-base",
+  "extends": [
+    "airbnb-base",
+    "prettier"
+  ],
+  "plugins": [
+    "import",
+    "prettier"
+  ],
   "env": {
-    "browser": true
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "settings": {
+    "import/resolver": {
+      "webpack": {
+        "config": "./webpack.config.js"
+      }
+    }
   },
   "rules": {
-    "linebreak-style": 0
+    "linebreak-style": 0,
+    "no-param-reassign": [2, {
+      "props": false
+    }],
+    "no-plusplus": 0,
+    "no-console": 0,
+    "no-alert": 0,
+    "no-underscore-dangle": 0,
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": true
+    }],
+    "prettier/prettier": ["error"]
   }
 }

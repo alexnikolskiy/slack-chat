@@ -3,23 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const fields = document.querySelectorAll('.login-page__input');
   const links = document.querySelectorAll('.login-page__link');
 
-  [...fields].forEach(field => field.addEventListener('focus', (ev) => {
-    ev.target.parentElement.classList.remove('error');
-  }));
-
-  [...links].forEach(link => link.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    ev.target.closest('.login-page__form-wrapper').classList.toggle('login-page__form-wrapper_flipped');
-  }));
-
-  [...forms].forEach(form => form.addEventListener('submit', onSubmit));
-
   async function onSubmit(ev) {
     ev.preventDefault();
 
-    const url = ev.target.action;
-    const method = ev.target.method;
-    let form = ev.target;
+    const { action: url, method } = ev.target;
+    const form = ev.target;
     const formData = new URLSearchParams(new FormData(form));
 
     const response = await fetch(url, {
@@ -37,11 +25,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    for (let name in data.error) {
+    const errors = Object.keys(data.error);
+    errors.forEach(name => {
       const parent = form.elements[name].parentElement;
 
       parent.classList.add('error');
       parent.dataset.error = data.error[name];
-    }
+    });
   }
+
+  [...fields].forEach(field =>
+    field.addEventListener('focus', ev => {
+      ev.target.parentElement.classList.remove('error');
+    }),
+  );
+
+  [...links].forEach(link =>
+    link.addEventListener('click', ev => {
+      ev.preventDefault();
+      ev.target
+        .closest('.login-page__form-wrapper')
+        .classList.toggle('login-page__form-wrapper_flipped');
+    }),
+  );
+
+  [...forms].forEach(form => form.addEventListener('submit', onSubmit));
 });

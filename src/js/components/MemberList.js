@@ -24,8 +24,8 @@ class MemberList {
   setHandlers() {
     const links = this.elem.querySelectorAll('.listitem__link');
 
-    [...links].forEach((link) => {
-      link.addEventListener('click', (ev) => {
+    [...links].forEach(link => {
+      link.addEventListener('click', ev => {
         ev.preventDefault();
 
         this.selectMember(link.dataset.id);
@@ -34,7 +34,7 @@ class MemberList {
   }
 
   selectMember(id) {
-    const member = this.members.find(member => member.id === id);
+    const member = this.members.find(m => m.id === id);
 
     this.selected = member.id;
     member.newMessages = 0;
@@ -43,9 +43,11 @@ class MemberList {
   }
 
   selectUser(username) {
-    const member = this.members.find(member => member.username === username);
+    const member = this.members.find(m => m.username === username);
 
-    if (!member) { return; }
+    if (!member) {
+      return;
+    }
 
     this.selectMember(member.id);
   }
@@ -61,19 +63,20 @@ class MemberList {
     }));
     this.selected = null;
 
-    pubsub.pub('member:join', this.members );
+    pubsub.pub('member:join', this.members);
     this.render();
   }
 
   handleNewMessage(memberName) {
-    const member = this.members.find(member => member.username === memberName);
+    const member = this.members.find(m => m.username === memberName);
 
-    if (!member) { return; }
+    if (!member) {
+      return;
+    }
 
     member.newMessages += 1;
     this.render();
   }
-
 
   async joinRoom(room) {
     this.members = await getRoomMembers(room.id);
@@ -85,12 +88,12 @@ class MemberList {
     }));
     this.selected = null;
 
-    pubsub.pub('member:join', this.members );
+    pubsub.pub('member:join', this.members);
     this.render();
   }
 
   ioJoinRoom(user) {
-    if (!this.members.find(item =>item.id === user.id)) {
+    if (!this.members.find(item => item.id === user.id)) {
       this.members.push({
         ...user,
         isLoggedUser: false,
@@ -116,7 +119,7 @@ class MemberList {
     const member = this.members[idx];
 
     this.members.splice(idx, 1);
-    this.members.push({...member, ...user});
+    this.members.push({ ...member, ...user });
 
     this.render();
   }

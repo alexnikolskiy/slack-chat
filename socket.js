@@ -2,8 +2,8 @@ const Room = require('./models/room');
 const User = require('./models/user');
 const Message = require('./models/message');
 
-module.exports = (io) => {
-  let typingUsers = {};
+module.exports = io => {
+  const typingUsers = {};
 
   function init() {
     io.use(async (socket, next) => {
@@ -17,13 +17,13 @@ module.exports = (io) => {
           await socket.user.save();
         }
 
-        next();
+        return next();
       } catch (err) {
-        next(new Error(err.message));
+        return next(new Error(err.message));
       }
     });
 
-    io.on('connection', async (socket) => {
+    io.on('connection', async socket => {
       socket.join(`room:${socket.user.room.name}`);
 
       socket.user.online = true;
@@ -42,49 +42,51 @@ module.exports = (io) => {
 
       socket.to(`room:${socket.user.room.name}`).emit('online', user);
 
-      socket.on('room:join', async (roomId) => {
+      socket.on('room:join', async roomId => {
         try {
           const previousRoom = socket.user.room;
-          const room = await Room.findById(roomId);
+          const newRoom = await Room.findById(roomId);
 
-          socket.join(`room:${room.name}`);
-          socket.user.room = room;
+          socket.join(`room:${newRoom.name}`);
+          socket.user.room = newRoom;
           await socket.user.save();
 
-          const message = new Message({
+          const newMessage = new Message({
             sender: socket.user._id,
-            text: `joined #${room.name}`,
-            room: room._id,
+            text: `joined #${newRoom.name}`,
+            room: newRoom._id,
             automated: true,
           });
-          await message.save();
+          await newMessage.save();
 
           Object.keys(socket.rooms)
             .filter(room => room.includes('room:') && !room.includes(socket.user.room.name))
-            .forEach(room => socket.leave(room, async () => {
-              const message = new Message({
-                sender: socket.user._id,
-                text: `left #${previousRoom.name}`,
-                room: previousRoom._id,
-                automated: true,
-              });
+            .forEach(room =>
+              socket.leave(room, async () => {
+                const message = new Message({
+                  sender: socket.user._id,
+                  text: `left #${previousRoom.name}`,
+                  room: previousRoom._id,
+                  automated: true,
+                });
 
-              await message.save();
+                await message.save();
 
-              socket.to(room).emit('room:leave', {
-                id: socket.user._id,
-                username: socket.user.username,
-                online: socket.user.online,
-                room: {
-                  id: previousRoom._id,
-                  name: previousRoom.name,
-                },
-                message: message._id,
-                socket: socket.user.socket,
-              });
-            }));
+                socket.to(room).emit('room:leave', {
+                  id: socket.user._id,
+                  username: socket.user.username,
+                  online: socket.user.online,
+                  room: {
+                    id: previousRoom._id,
+                    name: previousRoom.name,
+                  },
+                  message: message._id,
+                  socket: socket.user.socket,
+                });
+              }),
+            );
 
-          socket.to(`room:${room.name}`).emit('room:join', {
+          socket.to(`room:${newRoom.name}`).emit('room:join', {
             id: socket.user._id,
             username: socket.user.username,
             online: socket.user.online,
@@ -92,12 +94,12 @@ module.exports = (io) => {
               id: socket.user.room._id,
               name: socket.user.room.name,
             },
-            message: message._id,
+            message: newMessage._id,
             socket: socket.user.socket,
           });
           socket.emit('member:join', {
-            id: room._id,
-            name: room.name,
+            id: newRoom._id,
+            name: newRoom.name,
           });
         } catch (err) {
           throw new Error(err.message);
@@ -107,7 +109,7 @@ module.exports = (io) => {
       socket.on('message:add', async (text, sender = null, receiver = null) => {
         const message = new Message({
           sender: sender ? sender.id : socket.user._id,
-          text: text,
+          text,
           room: socket.user.room._id,
           receiver: receiver ? receiver.id : null,
         });
@@ -117,7 +119,7 @@ module.exports = (io) => {
         const sendMsg = {
           id: message._id,
           sender: sender ? sender.username : socket.user.username,
-          text: text,
+          text,
           timestamp: message.timestamp,
           room: socket.user.room._id,
         };
@@ -134,7 +136,9 @@ module.exports = (io) => {
 
       socket.on('editor:typing', (receiver = null) => {
         let users;
-        const key = receiver ? `${socket.user.username}-${receiver.username}` : socket.user.room.name;
+        const key = receiver
+          ? `${socket.user.username}-${receiver.username}`
+          : socket.user.room.name;
 
         if (!typingUsers[key]) {
           typingUsers[key] = new Set();
@@ -144,7 +148,12 @@ module.exports = (io) => {
 
         if (receiver) {
           users = [...typingUsers[`${socket.user.username}-${receiver.username}`]];
-          io.to(receiver.socket).emit('editor:typing', users, socket.user.username, receiver.username);
+          io.to(receiver.socket).emit(
+            'editor:typing',
+            users,
+            socket.user.username,
+            receiver.username,
+          );
         } else {
           users = [...typingUsers[socket.user.room.name]];
           io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, socket.user.username);
@@ -152,21 +161,28 @@ module.exports = (io) => {
       });
 
       socket.on('editor:stop-typing', (receiver = null) => {
-        const key = receiver ? `${socket.user.username}-${receiver.username}` : socket.user.room.name;
+        const key = receiver
+          ? `${socket.user.username}-${receiver.username}`
+          : socket.user.room.name;
         let users;
 
         typingUsers[key].delete(socket.user.username);
 
         if (receiver) {
           users = [...typingUsers[`${socket.user.username}-${receiver.username}`]];
-          io.to(receiver.socket).emit('editor:typing', users, socket.user.username, receiver.username);
+          io.to(receiver.socket).emit(
+            'editor:typing',
+            users,
+            socket.user.username,
+            receiver.username,
+          );
         } else {
           users = [...typingUsers[socket.user.room.name]];
           io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, socket.user.username);
         }
       });
 
-      socket.on('message:edit', async (message) => {
+      socket.on('message:edit', async message => {
         await Message.findByIdAndUpdate(message.id, { text: message.text });
         socket.to(`room:${socket.user.room.name}`).emit('message:edit', {
           id: message.id,
@@ -174,7 +190,7 @@ module.exports = (io) => {
         });
       });
 
-      socket.on('message:delete', async (id) => {
+      socket.on('message:delete', async id => {
         await Message.findByIdAndDelete(id);
         socket.to(`room:${socket.user.room.name}`).emit('message:delete', id);
       });
@@ -197,6 +213,6 @@ module.exports = (io) => {
   }
 
   return {
-    init
-  }
+    init,
+  };
 };
