@@ -20,46 +20,22 @@ export const debounce = (fn, delay) => {
   };
 };
 
-export async function getRoomMembers(roomId) {
-  try {
-    const response = await fetch(`api/rooms/${roomId}/members`);
-    const data = await response.json();
+export const htmlToElement = html => {
+  const template = document.createElement('template');
 
-    return data.data;
-  } catch (err) {
-    throw new Error(err.message);
+  template.innerHTML = html.trim();
+
+  return template.content.firstChild;
+};
+
+export function getUserAvatar(user = null, size = 72) {
+  if (user && user.avatar) {
+    if (user.avatar.includes('http') || user.avatar.includes('avatars')) {
+      return user.avatar;
+    }
+
+    return `avatars/${user.avatar}`;
   }
-}
 
-export async function getRoomMessages(roomId) {
-  try {
-    const response = await fetch(`api/rooms/${roomId}/messages`);
-    const data = await response.json();
-
-    return data.data;
-  } catch (err) {
-    throw new Error(err.message);
-  }
-}
-
-export async function getRooms() {
-  try {
-    const response = await fetch('api/rooms');
-    const data = await response.json();
-
-    return data.data;
-  } catch (err) {
-    throw new Error(err.message);
-  }
-}
-
-export async function getPrivateMessages(roomId, receiverId) {
-  try {
-    const response = await fetch(`api/rooms/${roomId}/messages/${receiverId}`);
-    const data = await response.json();
-
-    return data.data;
-  } catch (err) {
-    throw new Error(err.message);
-  }
+  return `https://api.adorable.io/avatars/${size}/${user.username}.png`;
 }

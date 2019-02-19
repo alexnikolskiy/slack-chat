@@ -79,4 +79,20 @@ module.exports = {
       }
     }
   },
+  logout(req, res, next) {
+    if (req.session) {
+      const io = req.app.get('io');
+      const { socket } = req.user;
+
+      req.session.destroy(err => {
+        io.to(socket).emit('logout');
+
+        if (err) {
+          return next(err);
+        }
+
+        return res.status(200).json({ success: true });
+      });
+    }
+  },
 };

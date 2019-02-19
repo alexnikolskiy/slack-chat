@@ -1,3 +1,9 @@
-import config from '../../../config';
+import { socket } from '../../../config';
 
-export default window.io(`${config.socket.url}`, config.socket.options);
+const io = window.io(`${socket.url}`, socket.options);
+
+if (process.env.NODE_ENV === 'development') {
+  window.localStorage.debug = 'socket.io-client:socket';
+}
+
+export default io;

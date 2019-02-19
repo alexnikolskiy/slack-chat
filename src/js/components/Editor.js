@@ -32,6 +32,8 @@ class Editor {
     const buttonRecord = this.elem.querySelector('.message-form__button_record');
 
     input.focus();
+    input.parentElement.classList.add('message-form__input-wrapper_focus');
+
     input.addEventListener('focus', ev => {
       ev.target.parentElement.classList.add('message-form__input-wrapper_focus');
     });
@@ -65,12 +67,15 @@ class Editor {
         } else {
           ev.preventDefault();
           input.value = input.value.replace(/\r?\n/g, '<br>');
-          pubsub.pub('message:add', input.value);
+          pubsub.pub('message:write', input.value);
+          io.emit('editor:stop-typing', this.receiver);
           input.value = '';
           onInput(ev);
         }
       } else if (ev.keyCode === 38) {
-        pubsub.pub('message:edit-last');
+        if (!input.value) {
+          pubsub.pub('message:edit-last');
+        }
       }
     });
 

@@ -1,0 +1,21 @@
+<div class="edit-profile">
+  <div class="edit-profile__item">
+    <div class="edit-profile__field edit-profile__field_width-2-of-3">
+      <label class="edit-profile__field-label" for="username">Username</label>
+      <input class="edit-profile__field-input" id="username" name="username" type="text" value="{{username}}" readonly>
+    </div>
+    <div class="edit-profile__avatar-container">
+      <label class="edit-profile__field-label" for="file">Profile foto</label>
+      <input class="edit-profile__avatar-input" id="file" name="file" type="file" accept="image/*">
+      <div class="edit-profile__avatar-wrapper">
+        <img class="edit-profile__avatar-image" src="{{avatar}}">
+        <div class="edit-profile__avatar-overlay">
+          <svg class="edit-profile__avatar-overlay-icon" width="20" height="20">
+            <use xlink:href="#camera"></use>
+          </svg>
+          <span class="edit-profile__avatar-overlay-text">Change your profile photo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

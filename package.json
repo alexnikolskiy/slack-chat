@@ -1,6 +1,6 @@
 {
   "name": "slack-chat",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "server.js",
   "description": "Chat like Slack on socket.io & mongodb",
   "author": "Alexander Nikolskiy",

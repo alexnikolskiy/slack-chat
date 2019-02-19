@@ -1,16 +1,24 @@
 import template from 'Templates/message-new';
+import { htmlToElement } from 'Utils/helpers';
 
 class MessageNewOutput {
   constructor() {
     this.message = null;
-    this.template = document.createElement('template');
+    this.elem = null;
+  }
+
+  setHandlers() {
+    setTimeout(() => {
+      this.elem.parentElement.removeChild(this.elem);
+    }, 3000);
   }
 
   output(message = {}) {
     this.message = message;
-    this.template.innerHTML = template(message);
+    this.elem = htmlToElement(template(message));
+    this.setHandlers();
 
-    return this.template.content.firstChild;
+    return this.elem;
   }
 }
 

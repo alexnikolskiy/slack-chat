@@ -73,6 +73,7 @@ module.exports = {
       messages = messages.map(message => ({
         id: message._id,
         sender: message.sender.username,
+        avatar: message.sender.avatar,
         room: message.room ? message.room.name : null,
         text: message.text,
         timestamp: message.timestamp,
@@ -114,6 +115,7 @@ module.exports = {
       messages = messages.map(message => ({
         id: message._id,
         sender: message.sender.username,
+        avatar: message.sender.avatar,
         receiver: message.receiver.username,
         room: message.room ? message.room.name : null,
         text: message.text,

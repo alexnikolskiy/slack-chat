@@ -6,15 +6,13 @@ class NotificationBar {
   constructor() {
     this.elem = document.querySelector('.notification-bar');
     this.text = '';
-    this.user = null;
-    this.isPrivate = false;
-    this.member = null;
+    this.sender = null;
+    this.receiver = null;
 
     pubsub.sub('member:select', this.handleSelectMember.bind(this));
-    pubsub.sub('room:join', this.handleSelectRoom.bind(this));
     pubsub.sub('room:select', this.handleSelectRoom.bind(this));
 
-    io.on('editor:typing', this.handleTyping.bind(this));
+    io.on('editor:typing', this.ioMessageTyping.bind(this));
     io.on('login', this.ioLogin.bind(this));
   }
 
@@ -33,23 +31,16 @@ class NotificationBar {
     return text;
   }
 
-  handleTyping(users, sender = null, receiver = null) {
-    let userList = [...users];
+  ioMessageTyping(users, sender, receiver = null) {
+    const isPrivateChatting = !!this.receiver;
+    let userList = users.filter(user => user !== this.sender.username);
 
-    if (!receiver) {
-      userList = userList.filter(user => user !== this.user.username);
-    }
-
-    if (this.isPrivate && receiver) {
-      if (receiver === this.user.username && this.user.username !== this.member.username) {
-        userList = userList.filter(user => user !== receiver);
-      } else {
-        userList = [];
-      }
-    } else if (!this.isPrivate && receiver) {
-      userList = userList.filter(user => user !== sender);
-    } else if (this.isPrivate && !receiver) {
-      userList = userList.filter(user => user === receiver);
+    if (
+      (!isPrivateChatting && receiver) ||
+      (isPrivateChatting && !receiver) ||
+      (isPrivateChatting && this.receiver.username === this.sender.username)
+    ) {
+      userList = [];
     }
 
     this.text = NotificationBar.getTypingText(userList);
@@ -57,17 +48,15 @@ class NotificationBar {
   }
 
   handleSelectMember(member) {
-    this.isPrivate = true;
-    this.member = member;
+    this.receiver = member;
   }
 
   handleSelectRoom() {
-    this.isPrivate = false;
-    this.member = null;
+    this.receiver = null;
   }
 
   ioLogin(user) {
-    this.user = user;
+    this.sender = user;
   }
 
   render() {

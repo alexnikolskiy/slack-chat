@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 
 const app = express();
@@ -11,21 +12,17 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
 const cors = require('cors');
+const { log } = require('debug');
 
-const config = require('./config');
-const { isAuth } = require('./middlewares/auth');
 const loadUser = require('./middlewares/loadUser');
+const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
 const apiRouter = require('./routes/api');
 const socketio = require('./socket')(io);
 
-let dbUrl = `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${
-  config.db.port
-}/${config.db.name}`;
-
-if (config.db.options) {
-  dbUrl += `?${config.db.options}`;
-}
+const dbUrl = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${
+  process.env.DB_HOST
+}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
 mongoose.connect(dbUrl, {
   useNewUrlParser: true,
@@ -43,8 +40,8 @@ app.use(morgan('dev'));
 app.use(
   cors({
     origin: [
-      `http://${config.http.host}:${config.http.port}`,
-      `http://${config.http.host}:${config.http.devPort}`,
+      `http://${process.env.HTTP_HOST}:${process.env.HTTP_PORT}`,
+      `http://${process.env.HTTP_HOST}:${process.env.HTTP_DEV_PORT}`,
     ],
     credentials: true,
   }),
@@ -52,7 +49,7 @@ app.use(
 
 const sessionMiddleware = session({
   key: 'chat.sid',
-  secret: config.secret,
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {
@@ -68,12 +65,10 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 app.use(express.static(path.join(__dirname, 'build'), { index: false }));
-
-app.get('/', isAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+app.use('/avatars', express.static(path.join(__dirname, 'uploads')));
 
 app.use(loadUser);
+app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/api', apiRouter);
 
@@ -81,7 +76,8 @@ io.use((socket, next) => {
   sessionMiddleware(socket.request, socket.request.res, next);
 });
 socketio.init();
+app.set('io', io);
 
-http.listen(config.http.port, config.http.host, () => {
-  console.log('Express server started on %s:%s', config.http.host, config.http.port);
+http.listen(process.env.HTTP_PORT, process.env.HTTP_HOST, () => {
+  log('Express server started on %s:%s', process.env.HTTP_HOST, process.env.HTTP_PORT);
 });
