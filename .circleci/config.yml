@@ -1,0 +1,53 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image circleci/node:10.13
+
+    working_directory: ~/slack-chat
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+
+      - run:
+          name: Install dependencies
+          command: npm install
+
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+
+      - run:
+          name: stylelint
+          command: npm run stylelint
+
+      - run:
+          name: eslint
+          command: npm run eslint
+
+  deploy:
+    machine:
+      enabled: true
+
+    steps:
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ssh -oStrictHostKeyChecking=no -v sysadmin@nikolskiy.me './deploy_slack_chat.sh'
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
