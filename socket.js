@@ -129,10 +129,8 @@ module.exports = io => {
       socket.on('message:add', async (text, receiver = null) => {
         const message = new Message({
           sender: socket.user._id,
-          // sender: sender.id,
           text,
           room: socket.user.room._id,
-          // room: sender.room,
           receiver: receiver ? receiver.id : null,
         });
 
@@ -141,14 +139,11 @@ module.exports = io => {
         const sendMsg = {
           id: message._id,
           sender: socket.user.username,
-          // sender: sender.username,
           avatar: socket.user.avatar,
-          // avatar: sender.avatar,
           receiver: receiver ? receiver.username : null,
           text,
           timestamp: message.timestamp,
           room: socket.user.room._id,
-          // room: sender.room,
         };
 
         if (!receiver) {
@@ -157,12 +152,10 @@ module.exports = io => {
           let receiverUser = socket.user;
 
           if (socket.user.username !== receiver.username) {
-            // receiverUser = await User.findById(receiver.id);
             receiverUser = receiver;
             socket.emit('message:add', sendMsg);
           }
 
-          // const receiverUser = await User.findById(receiver.id);
           io.to(receiverUser.socket).emit('message:add', sendMsg);
         }
       });
