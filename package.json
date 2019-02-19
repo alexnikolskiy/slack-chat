@@ -11,7 +11,7 @@
     "eslint:fix": "npx eslint \"**/*.js\" --fix",
     "start": "cross-env NODE_ENV=development nodemon --ignore src/ --ignore build/ server.js",
     "dev": "cross-env NODE_ENV=development npx gulp dev",
-    "build": "cross-env NODE_ENV=production npx gulp build --release"
+    "build": "cross-env NODE_ENV=production npx gulp build"
   },
   "browserslist": [
     "last 2 version",
