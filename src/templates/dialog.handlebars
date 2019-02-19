@@ -1,0 +1,17 @@
+<div class="dialog">
+  <div class="dialog__content">
+    {{#if title}}
+      <div class="dialog__header">
+        <div class="dialog__title">{{title}}</div>
+        <button class="dialog__close">
+          <svg class="dialog__close-icon" width="12" height="12" aria-labelledby="close">
+            <title id="close">Close</title>
+            <use xlink:href="#close"></use>
+          </svg>
+        </button>
+      </div>
+    {{/if}}
+    <div class="dialog__body"></div>
+    <div class="dialog__footer"></div>
+  </div>
+</div>

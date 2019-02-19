@@ -1,15 +1,16 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const readline = require('readline');
+const { log } = require('debug');
 const Room = require('../models/room');
-const config = require('../config');
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-const dbUrl = `mongodb://${config.db.user}:${config.db.password}@${config.db.host}:${
-  config.db.port
-}/${config.db.name}`;
+const dbUrl = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${
+  process.env.DB_HOST
+}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
 mongoose.connect(dbUrl, {
   useNewUrlParser: true,
@@ -25,20 +26,20 @@ rl.question('Room name: ', answer => {
 
 rl.on('close', async () => {
   if (roomName.length < 2) {
-    console.log('Incorrect room name!');
+    log('Incorrect room name!');
     process.exit();
   }
 
   const room = await Room.findOne({ name: roomName });
 
   if (room) {
-    console.log('Room already exists!');
+    log('Room already exists!');
     process.exit();
   }
 
   const newRoom = new Room({ name: roomName });
   await newRoom.save();
 
-  console.log('ok!');
+  log('ok!');
   process.exit(0);
 });

@@ -12,7 +12,7 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: [/node_modules/, path.resolve(__dirname, 'config.js')],
         loader: 'babel-loader',
         options: {
           presets: [
@@ -21,11 +21,6 @@ module.exports = {
               {
                 useBuiltIns: 'usage',
                 modules: false,
-                /*
-              targets: {
-                "esmodules": true
-              }
-              */
               },
             ],
           ],
@@ -33,23 +28,11 @@ module.exports = {
       },
     ],
   },
-  plugins: [],
   resolve: {
     alias: {
       handlebars: 'handlebars/runtime.js',
       Templates: path.resolve(__dirname, 'src/templates/build'),
       Utils: path.resolve(__dirname, 'src/js/utils'),
-    },
-  },
-  optimization: {
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendor',
-          chunks: 'all',
-        },
-      },
     },
   },
 };

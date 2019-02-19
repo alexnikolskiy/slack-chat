@@ -1,4 +1,4 @@
-import chatHeaderTemplate from 'Templates/chat-header';
+import template from 'Templates/chat-header';
 import pubsub from 'Utils/pubsub';
 import io from 'Utils/io';
 
@@ -10,21 +10,40 @@ class ChatHeader {
       info: '',
       isLoggedUser: false,
       isMember: false,
+      online: false,
     };
 
     pubsub.sub('room:leave', this.handleLeaveRoom.bind(this));
+    pubsub.sub('room:select', this.handleSelectRoom.bind(this));
     pubsub.sub('member:join', this.handleMemberJoin.bind(this));
-    pubsub.sub('room:join', this.handleJoinRoom.bind(this));
     pubsub.sub('member:select', this.handleMemberSelect.bind(this));
 
     io.on('online', this.ioChangeStatus.bind(this));
     io.on('offline', this.ioChangeStatus.bind(this));
   }
 
-  handleMemberJoin(members) {
+  getInfo(data, isMember) {
+    if (!data) {
+      return '';
+    }
+
+    if (data instanceof Array) {
+      const count = data.length;
+      const infoText = count === 1 ? 'member' : 'members';
+
+      return `${count} ${infoText}`;
+    }
+
+    const infoText = data.online ? 'online' : 'offline';
+    const isMemberSelected = isMember === undefined ? this.state.isMember : isMember;
+
+    return `${isMemberSelected ? infoText : this.state.info}`;
+  }
+
+  handleMemberJoin(members = []) {
     this.state = {
       ...this.state,
-      info: `${members.length} members`,
+      info: this.getInfo(members),
     };
     this.render();
   }
@@ -43,16 +62,26 @@ class ChatHeader {
   handleLeaveRoom(members) {
     this.state = {
       ...this.state,
-      info: `${members.length} members`,
+      info: this.getInfo(members),
     };
     this.render();
+  }
+
+  handleSelectRoom(room) {
+    this.state = {
+      ...this.state,
+      title: `# ${room.name}`,
+      info: '',
+      isLoggedUser: false,
+      isMember: false,
+    };
   }
 
   handleMemberSelect(member) {
     this.state = {
       ...this.state,
       title: member.username,
-      info: member.online ? 'online' : 'offline',
+      info: this.getInfo(member, true),
       isLoggedUser: member.isLoggedUser,
       isMember: true,
       online: member.online,
@@ -60,19 +89,17 @@ class ChatHeader {
     this.render();
   }
 
-  ioChangeStatus({ online }) {
-    const status = online ? 'online' : 'offline';
-
+  ioChangeStatus(member) {
     this.state = {
       ...this.state,
-      info: this.state.isMember ? status : this.state.info,
-      online,
+      info: this.getInfo(member),
+      online: member.online,
     };
     this.render();
   }
 
   render() {
-    this.elem.innerHTML = chatHeaderTemplate(this.state);
+    this.elem.innerHTML = template(this.state);
   }
 }
 

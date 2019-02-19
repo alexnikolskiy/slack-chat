@@ -1,4 +1,4 @@
-import { throttle } from 'Utils/helpers';
+import { throttle, htmlToElement } from 'Utils/helpers';
 import template from 'Templates/message-edit';
 
 import CancelCommand from '../commands/cancelCommand';
@@ -7,12 +7,12 @@ import SaveCommand from '../commands/saveCommand';
 class MessageEditOutput {
   constructor() {
     this.message = null;
-    this.template = document.createElement('template');
+    this.elem = null;
   }
 
   setHandlers() {
-    const input = this.template.content.querySelector('.message__editor-input');
-    const buttonsContainer = this.template.content.querySelector('.message__editor-footer');
+    const input = this.elem.querySelector('.message__editor-input');
+    const buttonsContainer = this.elem.querySelector('.message__editor-footer');
 
     input.addEventListener('focus', ev => {
       ev.target.parentElement.classList.add('message__editor-input-container_focus');
@@ -82,10 +82,10 @@ class MessageEditOutput {
   output(message = {}) {
     this.message = message;
     this.message.text = this.message.text.replace(/<br>/g, '\n');
-    this.template.innerHTML = template(message);
+    this.elem = htmlToElement(template(message));
     this.setHandlers();
 
-    return this.template.content.firstChild;
+    return this.elem;
   }
 }
 

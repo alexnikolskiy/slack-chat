@@ -18,8 +18,14 @@
   display: flex;
   margin-bottom: 10px;
 
-  &:hover {
+  &:hover,
+  &.active {
     background: $color-secondary;
+  }
+
+  &:hover .chat-sidebar__user-btn-icon,
+  &.active .chat-sidebar__user-btn-icon {
+    fill: #ffffff;
   }
 }
 
@@ -33,16 +39,33 @@
 .chat-sidebar__user-avatar-image {
   border-radius: 3px;
   display: block;
+  width: 40px;
+  height: 40px;
 }
 
 .chat-sidebar__user-name {
-  //margin-left: 70px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
   font-size: 16px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-right: 8px;
+  line-height: 40px;
+}
+
+.chat-sidebar__user-btn {
+  outline: 0;
+  background: 0 0;
+  border: 0;
+  padding: 0;
+  font-size: 0;
+}
+
+.chat-sidebar__user-btn-icon {
+  fill: $color-primary;
+  width: 8px;
+  height: 8px;
+  cursor: pointer;
 }
 
 .chat-sidebar__list {

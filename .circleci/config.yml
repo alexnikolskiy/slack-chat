@@ -2,9 +2,9 @@ version: 2
 jobs:
   build:
     docker:
-      - image circleci/node:10.13
+      - image: circleci/node:10.13
 
-    working_directory: ~/slack-chat
+    working_directory: ~/chat
 
     steps:
       - checkout
@@ -20,6 +20,14 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+
+      - run:
+          name: rename config
+          command: mv ~/chat/config.dist.js ~/chat/config.js
+
+      - run:
+          name: build templates
+          command: npx gulp templates
 
       - run:
           name: stylelint
@@ -48,5 +56,6 @@ workflows:
           requires:
             - build
           filters:
-            brances:
-              only: master
+            branches:
+              only:
+                - master

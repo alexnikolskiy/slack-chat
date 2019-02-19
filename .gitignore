@@ -1,5 +1,8 @@
 .idea
 node_modules
 build
+uploads
 config.js
 ecosystem.config.js
+report.html
+.env

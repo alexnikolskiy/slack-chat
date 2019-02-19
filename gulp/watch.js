@@ -2,14 +2,11 @@ const gulp = require('gulp');
 const browserSync = require('browser-sync').create();
 
 const paths = require('./paths.js');
-const config = require('../config');
+require('dotenv').config();
 
 const { sass, html, js, templates } = require('./build');
 
 function watch() {
-  // gulp.watch('**/*.scss', { cwd: paths.src.sass }, gulp.series(sass))
-  //   .on('change', browserSync.reload);
-
   gulp
     .watch('**/*.scss', { cwd: paths.src.sass }, gulp.series(sass))
     .on('change', browserSync.reload);
@@ -24,8 +21,8 @@ function watch() {
 
 function serve() {
   browserSync.init({
-    port: config.http.devPort,
-    proxy: `${config.http.host}:${config.http.port}`,
+    port: process.env.HTTP_DEV_PORT,
+    proxy: `${process.env.HTTP_HOST}:${process.env.HTTP_PORT}`,
   });
 }
 

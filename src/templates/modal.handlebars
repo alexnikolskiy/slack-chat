@@ -1,0 +1,13 @@
+<div class="modal{{#if header}} modal_header{{/if}}{{#if footer}} modal_footer{{/if}}">
+  <button class="modal__close">
+    <svg class="modal__close-icon" width="20" height="20" aria-labelledby="close">
+      <title id="close">Close</title>
+      <use xlink:href="#close"></use>
+    </svg>
+  </button>
+  {{#if header}}<div class="modal__header">{{title}}</div>{{/if}}
+  <div class="modal__content-container">
+    <div class="modal__content"></div>
+  </div>
+  {{#if footer}}<div class="modal__footer"></div>{{/if}}
+</div>
