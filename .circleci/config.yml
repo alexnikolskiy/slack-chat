@@ -45,7 +45,7 @@ jobs:
       - run:
           name: Deploy Over SSH
           command: |
-            ssh -oStrictHostKeyChecking=no -v sysadmin@nikolskiy.me './deploy_slack_chat.sh'
+            ssh -oStrictHostKeyChecking=no -v sysadmin@nikolskiy.me -p 2222 './deploy_slack_chat.sh'
 
 workflows:
   version: 2
