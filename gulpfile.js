@@ -12,6 +12,8 @@ gulp.task(
   ),
 );
 
+gulp.task('templates', gulp.series(templates));
+
 gulp.task('build', gulp.series('default'));
 
 gulp.task('dev', gulp.series('default', gulp.parallel(watch, serve)));
