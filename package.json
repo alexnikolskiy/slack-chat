@@ -15,8 +15,7 @@
   },
   "browserslist": [
     "last 2 version",
-    "> 1%",
-    "not ie <= 10"
+    "not dead"
   ],
   "husky": {
     "hooks": {
@@ -39,7 +38,7 @@
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
-    "handlebars": "^4.0.12",
+    "handlebars": "^4.1.0",
     "md5": "^2.2.1",
     "mongoose": "^5.4.3",
     "morgan": "^1.9.1",

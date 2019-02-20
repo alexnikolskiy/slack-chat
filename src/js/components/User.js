@@ -2,6 +2,7 @@ import template from 'Templates/user';
 import io from 'Utils/io';
 import { getUserAvatar } from 'Utils/helpers';
 import makeDialog from 'Utils/ui';
+import { logout, saveUser } from 'Utils/db';
 import Menu from './Menu';
 import Modal from './Modal';
 import EditUserProfile from './EditUserProfile';
@@ -32,16 +33,13 @@ class User {
 
     menu
       .add('Edit profile', '', this.handleEditProfile)
-      .add('Sign out', '', () => {
-        fetch(`auth/logout`, {
-          method: 'POST',
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              this.ioLogout();
-            }
-          });
+      .add('Sign out', '', async () => {
+        const response = await logout();
+        const data = await response.json();
+
+        if (data.success) {
+          this.ioLogout();
+        }
       })
       .show({ top: 60, left: 10 });
   }
@@ -59,7 +57,7 @@ class User {
     modal.open();
   }
 
-  handleSaveProfile(self) {
+  async handleSaveProfile(self) {
     const modalContent = self.getContent();
     const inputs = modalContent.querySelectorAll('input:not([type="file"])');
     const fileElem = modalContent.querySelector('input[type="file"]');
@@ -85,25 +83,21 @@ class User {
     formData.append('isDeleted', !!fileElem.dataset.deleted);
     formData.append('file', file);
 
-    fetch(`api/users/${this.user.id}`, {
-      method: 'POST',
-      body: formData,
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          const dialog = makeDialog({ content: data.error, ok: true });
-          dialog.show();
+    const reponse = await saveUser(this.user.id, formData);
+    const data = await reponse.json();
 
-          return;
-        }
+    if (data.error) {
+      const dialog = makeDialog({ content: data.error, ok: true });
+      dialog.show();
 
-        this.user = { ...this.user, ...data.data };
-        this.render();
-        self.destroy();
+      return;
+    }
 
-        io.emit('member:edit', this.user);
-      });
+    this.user = { ...this.user, ...data.data };
+    this.render();
+    self.destroy();
+
+    io.emit('member:edit', this.user);
   }
 
   ioLogin(user) {
