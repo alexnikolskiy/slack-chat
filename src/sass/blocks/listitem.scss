@@ -1,6 +1,6 @@
 .listitem {
   height: 26px;
-  font-size: 16px;
+  font-size: 0;
   position: relative;
 
   &_unread .listitem__link:visited,
@@ -87,8 +87,9 @@
   padding: 0 10px;
   display: flex;
   align-items: center;
-  line-height: 26px;
   width: 100%;
+  font-size: 16px;
+  line-height: 26px;
   text-decoration: none;
 
   &:visited,
