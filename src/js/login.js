@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch(url, {
         body: new FormData(form),
-        credentials: 'include',
+        credentials: 'same-origin',
         method,
       });
 
