@@ -12,7 +12,7 @@ const webpackConfig = require('../webpack.config.js');
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 webpackConfig.mode = isDevelopment ? 'development' : 'production';
-webpackConfig.devtool = isDevelopment ? 'inline-source-map' : 'source-map';
+webpackConfig.devtool = isDevelopment ? 'inline-source-map' : false;
 
 function clean() {
   return del('build');
