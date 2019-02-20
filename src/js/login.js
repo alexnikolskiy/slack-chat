@@ -8,16 +8,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { action: url, method } = ev.target;
     const form = ev.target;
-    const formData = new URLSearchParams(new FormData(form));
+    let data;
+    let errors = {};
 
-    const response = await fetch(url, {
-      body: formData,
-      method,
-    });
+    try {
+      const response = await fetch(url, {
+        body: new FormData(form),
+        credentials: 'same-origin',
+        method,
+      });
 
-    const data = await response.json();
+      data = await response.json();
 
-    if (!data || data.success || !data.error) {
+      if (data.error) {
+        errors = data.error;
+      }
+    } catch (err) {
+      errors.username = err.message;
+    }
+
+    if ((data && data.success) || Object.keys(errors).length === 0) {
       let loc = url.replace('.', '');
 
       loc = window.location.pathname.replace(loc, '');
@@ -25,12 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const errors = Object.keys(data.error);
-    errors.forEach(name => {
+    Object.keys(errors).forEach(name => {
       const parent = form.elements[name].parentElement;
 
       parent.classList.add('error');
-      parent.dataset.error = data.error[name];
+      parent.dataset.error = errors[name];
     });
   }
 
