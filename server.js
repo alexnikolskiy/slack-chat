@@ -31,6 +31,8 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+app.set('trust proxy', 1);
+
 const sessionMiddleware = session({
   key: process.env.SES_KEY,
   secret: process.env.SES_SECRET,
