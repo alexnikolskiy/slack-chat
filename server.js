@@ -40,7 +40,7 @@ const sessionMiddleware = session({
     path: '/',
     httpOnly: true,
     maxAge: null,
-    secure: process.env.NODE_ENV === 'production',
+    // secure: process.env.NODE_ENV === 'production',
   },
   store: new MongoStore({
     mongooseConnection: mongoose.connection,
