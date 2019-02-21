@@ -55,7 +55,7 @@ export async function logout() {
   }
 }
 
-export async function saveUser(userId, userData) {
+export async function saveUserProfile(userId, userData) {
   try {
     return fetch(`api/users/${userId}`, {
       method: 'POST',

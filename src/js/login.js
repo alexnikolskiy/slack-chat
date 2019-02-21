@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { action: url, method } = ev.target;
     const form = ev.target;
     let data;
-    let errors = {};
+    let errors = [];
 
     try {
       const response = await fetch(url, {
@@ -20,14 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       data = await response.json();
 
-      if (data.error) {
-        errors = data.error;
+      if (data.errors) {
+        errors = errors.concat(data.errors);
       }
     } catch (err) {
-      errors.username = err.message;
+      errors.push({ msg: err.message, param: 'username' });
     }
 
-    if ((data && data.success) || Object.keys(errors).length === 0) {
+    if ((data && data.success) || errors.length === 0) {
       let loc = url.replace('.', '');
 
       loc = window.location.pathname.replace(loc, '');
@@ -35,11 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    Object.keys(errors).forEach(name => {
-      const parent = form.elements[name].parentElement;
+    [...form.elements].forEach(elem => {
+      const parent = elem.parentElement;
+
+      parent.classList.remove('error');
+      parent.dataset.error = '';
+    });
+
+    errors.reverse().forEach(err => {
+      const parent = form.elements[err.param].parentElement;
 
       parent.classList.add('error');
-      parent.dataset.error = errors[name];
+      parent.dataset.error = err.msg;
     });
   }
 
