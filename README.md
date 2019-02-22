@@ -1,4 +1,4 @@
-# Slack chat [![CircleCI](https://circleci.com/gh/alexnikolskiy/slack-chat/tree/master.svg?style=svg)](https://circleci.com/gh/alexnikolskiy/slack-chat/tree/master)
+# Slack Chat [![CircleCI](https://circleci.com/gh/alexnikolskiy/slack-chat/tree/master.svg?style=svg)](https://circleci.com/gh/alexnikolskiy/slack-chat/tree/master)
 
 Chat like Slack on Socket.io and MongoDB. ([Demo](https://nikolskiy.me/slack-chat))
  
