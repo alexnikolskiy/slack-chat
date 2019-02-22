@@ -1,7 +1,7 @@
 # Slack chat
 Chat like Slack on Socket.io and MongoDB. ([Demo](https://nikolskiy.me/slack-chat))
  
-![alt text](https://res.cloudinary.com/dtv6nxle4/image/upload/v1550828176/screenshot.png)
+![alt text](https://res.cloudinary.com/dtv6nxle4/image/upload/c_scale,w_800/v1550828176/screenshot.png)
 
 ### Features
 - authorization, registration
