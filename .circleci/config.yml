@@ -34,8 +34,8 @@ jobs:
           command: npm run stylelint
 
       - run:
-          name: eslint
-          command: npm run eslint
+          name: lint
+          command: npm run lint
 
   deploy:
     machine:

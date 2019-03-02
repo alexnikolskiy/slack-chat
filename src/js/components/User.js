@@ -15,6 +15,7 @@ class User {
     this.handleElemClick = this.handleElemClick.bind(this);
     this.handleEditProfile = this.handleEditProfile.bind(this);
     this.handleSaveProfile = this.handleSaveProfile.bind(this);
+    this.handleSignOut = this.handleSignOut.bind(this);
 
     this.setHandlers();
 
@@ -33,14 +34,7 @@ class User {
 
     menu
       .add('Edit profile', '', this.handleEditProfile)
-      .add('Sign out', '', async () => {
-        const response = await logout();
-        const data = await response.json();
-
-        if (data.success) {
-          this.ioLogout();
-        }
-      })
+      .add('Sign out', '', this.handleSignOut)
       .show({ top: 60, left: 10 });
   }
 
@@ -100,6 +94,15 @@ class User {
     io.emit('member:edit', this.user);
   }
 
+  async handleSignOut() {
+    const response = await logout();
+    const data = await response.json();
+
+    if (data.success) {
+      this.ioLogout();
+    }
+  }
+
   ioLogin(user) {
     this.user = user;
     this.render();
@@ -107,7 +110,7 @@ class User {
 
   ioLogout() {
     this.user = null;
-    window.location.href = 'auth/login';
+    window.location.assign('auth/login');
   }
 
   render() {
