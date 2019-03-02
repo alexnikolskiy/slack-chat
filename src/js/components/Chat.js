@@ -19,7 +19,7 @@ class Chat {
     pubsub.sub('member:select', this.selectMember.bind(this));
   }
 
-  async ioLogin(user) {
+  ioLogin(user) {
     this.sender = user;
   }
 

@@ -10,7 +10,6 @@ const morgan = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
-const { log } = require('debug');
 
 const loadUser = require('./middlewares/loadUser');
 const indexRouter = require('./routes/index');
@@ -65,6 +64,4 @@ io.use((socket, next) => {
 socketio.init();
 app.set('io', io);
 
-http.listen(process.env.HTTP_PORT, process.env.HTTP_HOST, () => {
-  log('Express server started on %s:%s', process.env.HTTP_HOST, process.env.HTTP_PORT);
-});
+module.exports = http;
