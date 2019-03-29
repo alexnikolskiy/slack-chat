@@ -18,7 +18,7 @@ class Message {
     editing = false,
     edited = false,
     read = false,
-    avatar = null,
+    // avatar = null,
     hasChanges = false,
     rendered = false,
     pubsub = null,
@@ -36,12 +36,17 @@ class Message {
     this.read = read;
     this.hasChanges = hasChanges;
     this.rendered = rendered;
-    this.avatar = getUserAvatar(
-      { ...this.sender, avatar: (this.sender && this.sender.avatar) || avatar },
-      72,
-    );
+    // this.avatar = getUserAvatar(
+    //   { ...this.sender, avatar: (this.sender && this.sender.avatar) || avatar },
+    //   72,
+    // );
     this.pubsub = pubsub;
     this.handleActionButtonClick = this.handleActionButtonClick.bind(this);
+  }
+
+  get avatar() {
+    // return getUserAvatar({ ...this.sender, avatar: this.sender && this.sender.avatar }, 72);
+    return getUserAvatar(this.sender, 72);
   }
 
   renderActions(data) {

@@ -98,7 +98,7 @@ class User extends Component {
     store.dispatch('editUser', data.data);
     self.destroy();
 
-    this.io.emit('member:edit', sender);
+    this.io.emit('member:edit', sender.id);
   }
 
   static async handleSignOut() {
