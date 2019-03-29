@@ -1,4 +1,5 @@
 import { throttle, htmlToElement } from 'Utils/helpers';
+import { autoExpand } from 'Utils/ui';
 import template from 'Templates/message-edit';
 
 import CancelCommand from '../commands/cancelCommand';
@@ -6,8 +7,10 @@ import SaveCommand from '../commands/saveCommand';
 
 class MessageEditOutput {
   constructor() {
-    this.message = null;
     this.elem = null;
+    this.message = null;
+    this.handleButtonClick = this.handleButtonClick.bind(this);
+    this.handleInputKeydown = this.handleInputKeydown.bind(this);
   }
 
   setHandlers() {
@@ -22,67 +25,63 @@ class MessageEditOutput {
       ev.target.parentElement.classList.remove('message__editor-input-container_focus');
     });
 
-    function onInput(ev) {
-      const maxHeight = Math.ceil(window.innerHeight / 4);
+    input.addEventListener('input', throttle(() => autoExpand(input, 4), 400), false);
 
-      if (ev.target.scrollHeight <= maxHeight - 20) {
-        ev.target.style.height = 'auto';
-        ev.target.style.height = `${ev.target.scrollHeight}px`;
+    input.addEventListener('keydown', this.handleInputKeydown);
+
+    buttonsContainer.addEventListener('click', ev => this.handleButtonClick(ev, input));
+  }
+
+  handleInputKeydown(ev) {
+    const el = ev.currentTarget;
+
+    if (ev.keyCode === 13) {
+      if (ev.ctrlKey) {
+        el.value += '\n';
+      } else {
+        ev.preventDefault();
+        const command = new SaveCommand(this.message, el.value);
+        command.execute();
+        el.value = '';
       }
+
+      autoExpand(el, 4);
     }
 
-    input.addEventListener('input', throttle(onInput, 400), false);
+    if (ev.keyCode === 27) {
+      const command = new CancelCommand(this.message);
+      command.execute();
+    }
+  }
 
-    input.addEventListener('keydown', ev => {
-      if (ev.keyCode === 13) {
-        if (ev.ctrlKey) {
-          input.value += '\n';
-          onInput(ev);
-        } else {
-          ev.preventDefault();
-          const command = new SaveCommand(this.message, input.value);
-          command.execute();
-          input.value = '';
-          onInput(ev);
-        }
-      } else if (ev.keyCode === 27) {
-        const command = new CancelCommand(this.message);
-        command.execute();
-      }
-    });
+  handleButtonClick(ev, input) {
+    const btn = ev.target.closest('button');
 
-    buttonsContainer.addEventListener('click', ev => {
-      const button = ev.target.closest('.button');
+    if (!btn) {
+      return;
+    }
 
-      if (!button) {
-        return;
-      }
+    const { action } = btn.dataset;
+    let command;
 
-      const { action } = button.dataset;
-      let command;
+    switch (action) {
+      case 'cancel':
+        command = new CancelCommand(this.message);
+        break;
+      case 'save':
+        command = new SaveCommand(this.message, input.value);
+        break;
+      default:
+        throw new Error('Unknown command');
+    }
 
-      switch (action) {
-        case 'cancel':
-          command = new CancelCommand(this.message);
-          break;
-        case 'save':
-          this.message.text = input.value;
-          command = new SaveCommand(this.message, input.value);
-          break;
-        default:
-          break;
-      }
-
-      if (command) {
-        command.execute();
-      }
-    });
+    command.execute();
   }
 
   output(message = {}) {
     this.message = message;
     this.message.text = this.message.text.replace(/<br>/g, '\n');
-    this.elem = htmlToElement(template(message));
+    this.elem = htmlToElement(template(this.message));
     this.setHandlers();
 
     return this.elem;

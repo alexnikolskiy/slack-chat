@@ -13,7 +13,13 @@ function watch() {
   gulp
     .watch('**/*.html', { cwd: paths.src.html }, gulp.series(html))
     .on('change', browserSync.reload);
-  gulp.watch('**/*.js', { cwd: paths.src.js }, gulp.series(js)).on('change', browserSync.reload);
+  gulp
+    .watch(
+      ['**/*.js', '!**/__tests__/*.js', '!**/__mocks__/*.js'],
+      { cwd: paths.src.js },
+      gulp.series(js),
+    )
+    .on('change', browserSync.reload);
   gulp
     .watch('**/*.handlebars', { cwd: paths.src.templates }, gulp.series(templates))
     .on('change', browserSync.reload);

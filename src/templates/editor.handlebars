@@ -2,7 +2,8 @@
   <textarea class="message-form__input" name="text" rows="1"></textarea>
   {{#if canSpeechRecognize}}
   <button class="message-form__button message-form__button_record">
-    <svg class="message-form__icon" width="20" height="20">
+    <svg class="message-form__icon" width="20" height="20" aria-labelledby="microphone">
+      <title id="microphone">Hold to speak</title>
       <use xlink:href="#microphone"></use>
     </svg>
   </button>

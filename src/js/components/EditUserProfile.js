@@ -1,26 +1,23 @@
 import template from 'Templates/edit-profile';
-import { htmlToElement, getUserAvatar } from 'Utils/helpers';
+import { htmlToElement } from 'Utils/helpers';
+import { getUserAvatar } from 'Utils/ui';
 import Menu from './Menu';
 
 class EditUserProfile {
   constructor(user) {
     this.user = user;
-    this.elem = htmlToElement(
-      template({
-        ...this.user,
-        avatar: getUserAvatar(this.user, 192),
-      }),
-    );
+    this.elem = null;
 
-    this.setHandlers();
+    this.handleElemClick = this.handleElemClick.bind(this);
+    this.handleFileChange = this.handleFileChange.bind(this);
   }
 
   setHandlers() {
-    const elem = this.elem.querySelector('.edit-profile__avatar-wrapper');
+    const wrapper = this.elem.querySelector('.edit-profile__avatar-wrapper');
     const fileElem = this.elem.querySelector('.edit-profile__avatar-input');
 
-    elem.addEventListener('click', this.handleElemClick.bind(this));
-    fileElem.addEventListener('change', this.handleFileChange.bind(this));
+    wrapper.addEventListener('click', this.handleElemClick);
+    fileElem.addEventListener('change', this.handleFileChange);
   }
 
   handleElemClick(ev) {
@@ -64,6 +61,14 @@ class EditUserProfile {
   }
 
   render() {
+    this.elem = htmlToElement(
+      template({
+        ...this.user,
+        avatar: getUserAvatar(this.user, 192),
+      }),
+    );
+    this.setHandlers();
+
     return this.elem;
   }
 }
