@@ -36,7 +36,7 @@ module.exports = {
     try {
       let users = [];
 
-      users = await User.find();
+      users = await User.find().populate('room');
       users = users.map(user => user.toJSONFor());
 
       res.status(200).json({ success: true, data: users });
@@ -46,7 +46,7 @@ module.exports = {
   },
   async getOne(req, res) {
     try {
-      const user = await User.findById(req.params.id);
+      const user = await User.findById(req.params.id).populate('room');
 
       if (!user) {
         res.status(404).json({ success: false, error: 'Not found' });
@@ -71,10 +71,7 @@ module.exports = {
           avatar: req.file ? req.file.filename : avatar,
         });
 
-        const user = await User.findById(req.params.id);
-
-        // user.id = user._id;
-        // delete user._id;
+        const user = await User.findById(req.params.id).populate('room');
 
         return res.status(200).json({ success: true, data: user.toJSONFor() });
       } catch (e) {
