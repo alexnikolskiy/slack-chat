@@ -2,6 +2,7 @@
 node_modules
 build
 uploads
+coverage
 config.js
 ecosystem.config.js
 report.html

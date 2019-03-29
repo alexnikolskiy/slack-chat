@@ -3,6 +3,10 @@ export async function getRoomMembers(roomId) {
     const response = await fetch(`api/rooms/${roomId}/members`, { credentials: 'same-origin' });
     const data = await response.json();
 
+    if (!data.success) {
+      throw new Error(data.error);
+    }
+
     return data.data;
   } catch (err) {
     throw new Error(err.message);
@@ -14,6 +18,10 @@ export async function getRoomMessages(roomId) {
     const response = await fetch(`api/rooms/${roomId}/messages`, { credentials: 'same-origin' });
     const data = await response.json();
 
+    if (!data.success) {
+      throw new Error(data.error);
+    }
+
     return data.data;
   } catch (err) {
     throw new Error(err.message);
@@ -24,6 +32,10 @@ export async function getRooms() {
   try {
     const response = await fetch('api/rooms', { credentials: 'same-origin' });
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
 
     return data.data;
   } catch (err) {
@@ -38,30 +50,11 @@ export async function getPrivateMessages(roomId, receiverId) {
     });
     const data = await response.json();
 
+    if (!data.success) {
+      throw new Error(data.error);
+    }
+
     return data.data;
-  } catch (err) {
-    throw new Error(err.message);
-  }
-}
-
-export async function logout() {
-  try {
-    return fetch(`auth/logout`, {
-      method: 'POST',
-      credentials: 'same-origin',
-    });
-  } catch (err) {
-    throw new Error(err.message);
-  }
-}
-
-export async function saveUserProfile(userId, userData) {
-  try {
-    return fetch(`api/users/${userId}`, {
-      method: 'POST',
-      body: userData,
-      credentials: 'same-origin',
-    });
   } catch (err) {
     throw new Error(err.message);
   }

@@ -1,11 +1,13 @@
 {
   "extends": [
     "airbnb-base",
-    "prettier"
+    "prettier",
+    "plugin:jest/recommended"
   ],
   "plugins": [
     "import",
-    "prettier"
+    "prettier",
+    "jest"
   ],
   "env": {
     "browser": true,
@@ -28,9 +30,11 @@
     "no-plusplus": 0,
     "no-underscore-dangle": 0,
 //    "prefer-destructuring": 0,
+    "import/prefer-default-export": "off",
     "import/no-extraneous-dependencies": ["error", {
       "devDependencies": true
     }],
-    "prettier/prettier": ["error"]
+    "prettier/prettier": ["error"],
+    "import/named": "off" // jest manual mocks
   }
 }

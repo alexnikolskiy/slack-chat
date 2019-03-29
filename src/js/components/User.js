@@ -1,26 +1,33 @@
 import template from 'Templates/user';
-import io from 'Utils/io';
-import { getUserAvatar } from 'Utils/helpers';
-import makeDialog from 'Utils/ui';
-import { logout, saveUserProfile } from 'Utils/db';
+import { getUserAvatar, makeDialog } from 'Utils/ui';
+import * as userService from '../services/user';
+import * as authService from '../services/auth';
 import Menu from './Menu';
 import Modal from './Modal';
 import EditUserProfile from './EditUserProfile';
+import Component from '../lib/component';
+import store from '../store';
 
-class User {
-  constructor() {
-    this.elem = document.querySelector('.chat-sidebar__user');
-    this.user = null;
+class User extends Component {
+  constructor(io, pubsub) {
+    super({
+      store,
+      observedAttrs: ['sender'],
+      elem: document.querySelector('.chat-sidebar__user'),
+    });
+
+    this.io = io;
+    this.pubsub = pubsub;
 
     this.handleElemClick = this.handleElemClick.bind(this);
     this.handleEditProfile = this.handleEditProfile.bind(this);
     this.handleSaveProfile = this.handleSaveProfile.bind(this);
-    this.handleSignOut = this.handleSignOut.bind(this);
+    // this.handleSignOut = this.handleSignOut.bind(this);
 
     this.setHandlers();
 
-    io.on('login', this.ioLogin.bind(this));
-    io.on('logout', this.ioLogout.bind(this));
+    this.io.on('login', this.ioLogin.bind(this));
+    this.io.on('logout', User.ioLogout);
   }
 
   setHandlers() {
@@ -34,7 +41,7 @@ class User {
 
     menu
       .add('Edit profile', '', this.handleEditProfile)
-      .add('Sign out', '', this.handleSignOut)
+      .add('Sign out', '', User.handleSignOut)
       .show({ top: 60, left: 10 });
   }
 
@@ -44,8 +51,9 @@ class User {
       footer: true,
       title: 'Edit your profile',
     });
+    const { sender } = store.getState();
 
-    modal.setContent(new EditUserProfile(this.user).render());
+    modal.setContent(new EditUserProfile(sender).render());
     modal.addFooterBtn('Cancel', 'button', () => modal.destroy());
     modal.addFooterBtn('Save Changes', 'button button_primary margin-left', this.handleSaveProfile);
     modal.open();
@@ -77,8 +85,8 @@ class User {
     formData.append('isDeleted', !!fileElem.dataset.deleted);
     formData.append('file', file);
 
-    const reponse = await saveUserProfile(this.user.id, formData);
-    const data = await reponse.json();
+    const { sender } = store.getState();
+    const data = await userService.saveUserProfile(sender.id, formData);
 
     if (data.error) {
       const dialog = makeDialog({ content: data.error, ok: true });
@@ -87,40 +95,39 @@ class User {
       return;
     }
 
-    this.user = { ...this.user, ...data.data };
-    this.render();
+    store.dispatch('editUser', data.data);
     self.destroy();
 
-    io.emit('member:edit', this.user);
+    this.io.emit('member:edit', sender);
   }
 
-  async handleSignOut() {
-    const response = await logout();
-    const data = await response.json();
+  static async handleSignOut() {
+    const data = await authService.logout();
 
     if (data.success) {
-      this.ioLogout();
+      User.ioLogout();
     }
   }
 
   ioLogin(user) {
-    this.user = user;
-    this.render();
+    store.dispatch('login', user);
+    this.pubsub.pub('login');
   }
 
-  ioLogout() {
-    this.user = null;
+  static ioLogout() {
     window.location.assign('auth/login');
   }
 
   render() {
-    if (!this.user) {
+    const { sender } = store.getState();
+
+    if (!sender) {
       return;
     }
 
     this.elem.innerHTML = template({
-      username: this.user.username,
-      avatar: getUserAvatar(this.user, 72),
+      username: sender.username,
+      avatar: getUserAvatar(sender, 72),
     });
   }
 }

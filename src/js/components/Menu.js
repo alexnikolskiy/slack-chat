@@ -5,14 +5,12 @@ class Menu {
   constructor(target) {
     this.target = target;
     this.items = new Map();
-    this.elem = null;
-    this.list = null;
 
-    const container = document.querySelector('.chat-page__container');
-
-    this.elem = container.appendChild(htmlToElement(template()));
+    this.elem = htmlToElement(template());
     this.hide();
     this.setHandlers();
+
+    document.body.appendChild(this.elem);
 
     this.list = this.elem.querySelector('.menu__list');
     this.target.classList.add('active');

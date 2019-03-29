@@ -1,33 +1,31 @@
-import pubsub from 'Utils/pubsub';
-import io from 'Utils/io';
-import { getRooms } from 'Utils/db';
 import roomsTemplate from 'Templates/room-list';
+import * as roomService from '../services/room';
+import store from '../store';
+import Component from '../lib/component';
 
-class RoomList {
-  constructor() {
-    this.elem = document.querySelector('.chat-sidebar__rooms');
-    this.rooms = [];
-    this.selected = null;
-    this.joined = null;
-    this.lastVisit = Date.now();
+class RoomList extends Component {
+  constructor(io, pubsub) {
+    super({
+      store,
+      elem: document.querySelector('.chat-sidebar__rooms'),
+    });
+
+    this.state = {
+      rooms: [],
+      selected: null,
+      joined: null,
+      lastVisit: Date.now(),
+    };
+
+    this.io = io;
+    this.pubsub = pubsub;
 
     this.selectRoom = this.selectRoom.bind(this);
 
-    pubsub.sub('member:select', this.handleSelectMember.bind(this));
-    pubsub.sub('message:new', this.handleNewMessage.bind(this));
+    this.pubsub.sub('login', this.handleLogin.bind(this));
+    this.pubsub.sub('member:select', this.handleSelectMember.bind(this));
 
-    io.on('login', this.ioLogin.bind(this));
-  }
-
-  static async loadRooms() {
-    let rooms = await getRooms();
-
-    rooms = rooms.map(room => ({
-      ...room,
-      newMessages: 0,
-    }));
-
-    return rooms;
+    this.io.on('message:add', this.ioAddMessage.bind(this));
   }
 
   setHandlers() {
@@ -43,60 +41,90 @@ class RoomList {
   }
 
   selectRoom(roomId) {
-    if (roomId === this.selected) {
+    if (roomId === this.state.selected) {
       return;
     }
 
-    this.selected = roomId;
-    this.onSelectRoom(roomId);
-  }
-
-  handleSelectMember() {
-    this.selected = null;
-    this.lastVisit = Date.now();
-    this.render();
-  }
-
-  async ioLogin(user) {
-    this.rooms = await RoomList.loadRooms();
-    this.joined = user.room;
-    this.selectRoom(user.room);
-  }
-
-  onSelectRoom() {
-    const room = this.rooms.find(r => r.id === this.selected);
+    const room = this.state.rooms.find(r => r.id === roomId);
 
     if (!room) {
       return;
     }
 
-    pubsub.pub('room:select', room);
-    pubsub.pub('room:join', room, this.lastVisit);
+    let { joined } = this.state;
 
-    if (this.joined !== this.selected) {
-      io.emit('room:join', room.id);
-      this.joined = room.id;
+    if (joined !== roomId) {
+      this.io.emit('editor:stop-typing');
+      this.io.emit('room:join', room.id);
+      joined = room.id;
     }
 
-    this.lastVisit = Date.now();
-    room.newMessages = 0;
+    this.setState({
+      selected: roomId,
+      lastVisit: Date.now(),
+      rooms: [...this.state.rooms.filter(r => r.id !== room.id), { ...room, newMessages: 0 }],
+      joined,
+    });
 
-    this.render();
+    store.dispatch('selectRoom');
+    this.pubsub.pub('room:select', room, this.state.lastVisit);
   }
 
-  handleNewMessage(roomId) {
-    const room = this.rooms.find(r => r.id === roomId);
+  async handleLogin() {
+    const { sender } = store.getState();
+    const rooms = await roomService.getRooms();
 
-    room.newMessages += 1;
-    this.render();
+    this.setState({
+      rooms: rooms.map(room => ({
+        ...room,
+        newMessages: 0,
+      })),
+      joined: sender.room.id,
+    });
+
+    this.selectRoom(sender.room.id);
+  }
+
+  handleSelectMember() {
+    this.setState({
+      selected: null,
+      lastVisit: Date.now(),
+    });
+  }
+
+  ioAddMessage(message) {
+    const { sender, receiver } = store.getState();
+    const isPrivateMessage = !!message.receiver;
+
+    if (sender.room.id !== message.room.id) {
+      return;
+    }
+
+    if (receiver && !isPrivateMessage) {
+      this.setState({
+        rooms: this.state.rooms.map(room =>
+          room.id !== message.room.id ? room : { ...room, newMessages: room.newMessages + 1 },
+        ),
+      });
+    }
   }
 
   render() {
-    const rooms = this.rooms.map(room => ({
-      ...room,
-      selected: room.id === this.selected,
-      joined: room.id === this.joined,
-    }));
+    const rooms = this.state.rooms
+      .map(room => ({
+        ...room,
+        selected: room.id === this.state.selected,
+        joined: room.id === this.state.joined,
+      }))
+      .sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        return 0;
+      });
 
     this.elem.innerHTML = roomsTemplate({ rooms });
     this.setHandlers();
