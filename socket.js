@@ -175,7 +175,9 @@ module.exports = io => {
         socket.to(`room:${socket.user.room.name}`).emit('message:delete', id);
       });
 
-      socket.on('member:edit', member => {
+      socket.on('member:edit', async memberId => {
+        const member = await User.findById(memberId).populate('room');
+
         io.in(`room:${socket.user.room.name}`).emit('member:edit', member);
       });
 

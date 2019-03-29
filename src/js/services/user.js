@@ -11,3 +11,18 @@ export async function saveUserProfile(userId, userData) {
     throw new Error(err.message);
   }
 }
+
+export async function getOne(userId) {
+  try {
+    const response = await fetch(`api/users/${userId}`, { credentials: 'same-origin' });
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
+
+    return data.data;
+  } catch (err) {
+    throw new Error(err.message);
+  }
+}

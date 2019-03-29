@@ -1,4 +1,5 @@
 import Dialog from '../components/Dialog';
+import generate from '../../../utils/generate';
 
 export function makeDialog({ title = '', content = '', cancel = false, ok = false } = {}) {
   const dialog = new Dialog({ title });
@@ -29,7 +30,14 @@ export function getUserAvatar(user = null, size = 72) {
     return `avatars/${user.avatar}`;
   }
 
-  return `https://api.adorable.io/avatars/${size}/${user.username}.png`;
+  let userName;
+  if (!user) {
+    userName = generate.userData().username;
+  } else {
+    userName = user.username;
+  }
+
+  return `https://api.adorable.io/avatars/${size}/${userName}.png`;
 }
 
 export function autoExpand(input, ratio) {

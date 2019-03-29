@@ -96,7 +96,7 @@ describe('User', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith('editUser', sender);
     expect(mockModalDestroy).toHaveBeenCalledTimes(1);
-    expect(mockEmit).toHaveBeenCalledWith('member:edit', sender);
+    expect(mockEmit).toHaveBeenCalledWith('member:edit', sender.id);
   });
 
   test('should show an error dialog if file size > 1MB', async () => {
