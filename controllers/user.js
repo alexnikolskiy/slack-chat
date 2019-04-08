@@ -37,12 +37,7 @@ module.exports = {
       let users = [];
 
       users = await User.find();
-      users = users.map(user => ({
-        id: user._id,
-        username: user.name,
-        online: user.online,
-        chat: user.chat._id,
-      }));
+      users = users.map(user => user.toJSONFor());
 
       res.status(200).json({ success: true, data: users });
     } catch (err) {
@@ -51,20 +46,13 @@ module.exports = {
   },
   async getOne(req, res) {
     try {
-      const data = await User.findById(req.params.id);
+      const user = await User.findById(req.params.id);
 
-      if (!data) {
+      if (!user) {
         res.status(404).json({ success: false, error: 'Not found' });
       }
 
-      const user = {
-        id: data._id,
-        username: data.name,
-        online: data.online,
-        chat: data.chat._id,
-      };
-
-      res.status(200).json({ success: true, data: user });
+      res.status(200).json({ success: true, data: user.toJSONFor() });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
@@ -83,12 +71,12 @@ module.exports = {
           avatar: req.file ? req.file.filename : avatar,
         });
 
-        const user = await User.findById(req.params.id).select('username room online avatar');
+        const user = await User.findById(req.params.id);
 
-        user.id = user._id;
-        delete user._id;
+        // user.id = user._id;
+        // delete user._id;
 
-        return res.status(200).json({ success: true, data: user });
+        return res.status(200).json({ success: true, data: user.toJSONFor() });
       } catch (e) {
         return res.status(400).json({ success: false, error: e.message });
       }
