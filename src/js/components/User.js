@@ -2,7 +2,7 @@ import template from 'Templates/user';
 import io from 'Utils/io';
 import { getUserAvatar } from 'Utils/helpers';
 import makeDialog from 'Utils/ui';
-import { logout, saveUser } from 'Utils/db';
+import { logout, saveUserProfile } from 'Utils/db';
 import Menu from './Menu';
 import Modal from './Modal';
 import EditUserProfile from './EditUserProfile';
@@ -83,7 +83,7 @@ class User {
     formData.append('isDeleted', !!fileElem.dataset.deleted);
     formData.append('file', file);
 
-    const reponse = await saveUser(this.user.id, formData);
+    const reponse = await saveUserProfile(this.user.id, formData);
     const data = await reponse.json();
 
     if (data.error) {
