@@ -1,3 +1,5 @@
+import { log } from 'debug';
+
 class PubSub {
   constructor() {
     this.cache = {};
@@ -5,7 +7,7 @@ class PubSub {
 
   pub(id, ...args) {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Pub:${id}`);
+      log(`pub: ${id}\n%o`, args);
     }
 
     if (!this.cache[id]) {
@@ -19,7 +21,7 @@ class PubSub {
 
   sub(id, fn) {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Sub: ${id}`);
+      log(`Sub: ${id}`);
     }
 
     if (!this.cache[id]) {
