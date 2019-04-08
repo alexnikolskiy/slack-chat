@@ -49,5 +49,7 @@ module.exports = {
         return res.status(200).json({ success: true });
       });
     }
+
+    return res.status(403).json({ success: false });
   },
 };
