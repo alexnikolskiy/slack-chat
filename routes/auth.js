@@ -11,6 +11,8 @@ router.get('/login', isNotAuth, (req, res) => {
 
 router.post('/login', authController.login);
 
+router.post('/logout', authController.logout);
+
 router.post('/signup', authController.signup);
 
 module.exports = router;
