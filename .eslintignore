@@ -1,5 +1,6 @@
-/.git
-/.idea
-/node_modules
-/build
-/src/templates/build
+.git
+.idea
+node_modules
+build
+src/templates/build
+coverage
