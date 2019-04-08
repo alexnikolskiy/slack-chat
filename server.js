@@ -6,12 +6,10 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
-const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
-const cors = require('cors');
 const { log } = require('debug');
 
 const loadUser = require('./middlewares/loadUser');
@@ -29,36 +27,20 @@ mongoose.connect(dbUrl, {
   useCreateIndex: true,
 });
 
-app.use(bodyParser.json());
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  }),
-);
-
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use(
-  cors({
-    origin: [
-      `http://${process.env.HTTP_HOST}:${process.env.HTTP_PORT}`,
-      `http://${process.env.HTTP_HOST}:${process.env.HTTP_DEV_PORT}`,
-    ],
-    credentials: true,
-  }),
-);
-
 const sessionMiddleware = session({
-  key: 'chat.sid',
-  secret: process.env.SECRET,
+  key: process.env.SES_KEY,
+  secret: process.env.SES_SECRET,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
     path: '/',
     httpOnly: true,
     maxAge: null,
+    secure: process.env.NODE_ENV === 'production',
   },
   store: new MongoStore({
     mongooseConnection: mongoose.connection,
