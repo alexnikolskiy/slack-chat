@@ -1,4 +1,4 @@
-<li class="message message_editing data-id="{{id}}">
+<li class="message message_editing" data-id="{{id}}">
   <div class="message__avatar">
     <img class="message__avatar-image" src="{{avatar}}">
   </div>
@@ -8,8 +8,8 @@
         <textarea class="message__editor-input" rows="1">{{{text}}}</textarea>
       </div>
       <div class="message__editor-footer">
-        <button class="button" data-action="cancel">Cancel</button>
-        <button class="button button_primary" data-action="save">Save changes</button>
+        <button class="button button_small" data-action="cancel">Cancel</button>
+        <button class="button button_small button_primary message__editor-save" data-action="save">Save changes</button>
       </div>
     </div>
   </div>
