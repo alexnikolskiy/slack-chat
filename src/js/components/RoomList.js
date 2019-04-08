@@ -1,6 +1,6 @@
 import pubsub from 'Utils/pubsub';
 import io from 'Utils/io';
-import { getRooms } from 'Utils/helpers';
+import { getRooms } from 'Utils/db';
 import roomsTemplate from 'Templates/room-list';
 
 class RoomList {
@@ -11,25 +11,23 @@ class RoomList {
     this.joined = null;
     this.lastVisit = Date.now();
 
-    this.loadRooms();
-
     this.selectRoom = this.selectRoom.bind(this);
 
-    pubsub.sub('member:select', this.selectMember.bind(this));
+    pubsub.sub('member:select', this.handleSelectMember.bind(this));
     pubsub.sub('message:new', this.handleNewMessage.bind(this));
 
     io.on('login', this.ioLogin.bind(this));
   }
 
-  async loadRooms() {
-    const rooms = await getRooms();
+  static async loadRooms() {
+    let rooms = await getRooms();
 
-    this.rooms = rooms.map(room => ({
+    rooms = rooms.map(room => ({
       ...room,
       newMessages: 0,
     }));
 
-    this.onSelectRoom();
+    return rooms;
   }
 
   setHandlers() {
@@ -44,22 +42,23 @@ class RoomList {
     });
   }
 
-  selectRoom(id) {
-    if (id === this.selected) {
+  selectRoom(roomId) {
+    if (roomId === this.selected) {
       return;
     }
-    this.selected = id;
 
-    this.onSelectRoom(id);
+    this.selected = roomId;
+    this.onSelectRoom(roomId);
   }
 
-  selectMember() {
+  handleSelectMember() {
     this.selected = null;
     this.lastVisit = Date.now();
     this.render();
   }
 
-  ioLogin(user) {
+  async ioLogin(user) {
+    this.rooms = await RoomList.loadRooms();
     this.joined = user.room;
     this.selectRoom(user.room);
   }
@@ -71,17 +70,17 @@ class RoomList {
       return;
     }
 
-    pubsub.pub('room:select', room, this.lastVisit);
-
-    this.lastVisit = Date.now();
-    room.newMessages = 0;
+    pubsub.pub('room:select', room);
+    pubsub.pub('room:join', room, this.lastVisit);
 
     if (this.joined !== this.selected) {
       io.emit('room:join', room.id);
       this.joined = room.id;
-    } else {
-      pubsub.pub('room:join', room, this.lastVisit);
     }
+
+    this.lastVisit = Date.now();
+    room.newMessages = 0;
+
     this.render();
   }
 
