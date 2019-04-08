@@ -1,7 +1,7 @@
 import pubsub from 'Utils/pubsub';
 import io from 'Utils/io';
-import { getRoomMembers } from 'Utils/helpers';
-import memberListTemplate from 'Templates/member-list';
+import { getRoomMembers } from 'Utils/db';
+import template from 'Templates/member-list';
 
 class MemberList {
   constructor() {
@@ -10,15 +10,15 @@ class MemberList {
     this.selected = null;
     this.user = null;
 
-    pubsub.sub('room:select', this.selectRoom.bind(this));
-    pubsub.sub('message:select-user', this.selectUser.bind(this));
+    pubsub.sub('room:select', this.handleSelectRoom.bind(this));
+    pubsub.sub('message:select-user', this.handleSelectUser.bind(this));
     pubsub.sub('message:new-private', this.handleNewMessage.bind(this));
 
+    io.on('login', this.ioLogin.bind(this));
     io.on('room:join', this.ioJoinRoom.bind(this));
     io.on('room:leave', this.ioLeaveRoom.bind(this));
-    io.on('login', this.ioLogin.bind(this));
-    io.on('offline', this.ioChangeStatus.bind(this));
     io.on('online', this.ioChangeStatus.bind(this));
+    io.on('offline', this.ioChangeStatus.bind(this));
   }
 
   setHandlers() {
@@ -35,14 +35,17 @@ class MemberList {
 
   selectMember(id) {
     const member = this.members.find(m => m.id === id);
-
-    this.selected = member.id;
-    member.newMessages = 0;
     pubsub.pub('member:select', member);
+
+    this.members = this.members.map(m =>
+      m.id !== id ? m : { ...m, lastVisit: Date.now(), newMessages: 0 },
+    );
+    this.selected = id;
+
     this.render();
   }
 
-  selectUser(username) {
+  handleSelectUser(username) {
     const member = this.members.find(m => m.username === username);
 
     if (!member) {
@@ -52,12 +55,12 @@ class MemberList {
     this.selectMember(member.id);
   }
 
-  async selectRoom(room) {
+  async handleSelectRoom(room) {
     const members = await getRoomMembers(room.id);
 
     this.members = members.map(member => ({
       ...member,
-      isLoggedUser: member.username === this.user.username,
+      isLoggedUser: member.id === this.user.id,
       lastVisit: Date.now(),
       newMessages: 0,
     }));
@@ -78,34 +81,26 @@ class MemberList {
     this.render();
   }
 
-  async joinRoom(room) {
-    this.members = await getRoomMembers(room.id);
-    this.members = this.members.map(member => ({
-      ...member,
-      isLoggedUser: member.username === this.user.username,
-      lastVisit: Date.now(),
-      newMessages: 0,
-    }));
-    this.selected = null;
+  ioJoinRoom(data) {
+    if (this.members.find(member => member.id === data.user.id)) {
+      return;
+    }
 
-    pubsub.pub('member:join', this.members);
-    this.render();
-  }
-
-  ioJoinRoom(user) {
-    if (!this.members.find(item => item.id === user.id)) {
-      this.members.push({
-        ...user,
+    this.members = [
+      ...this.members,
+      {
+        ...data.user,
         isLoggedUser: false,
         lastVisit: Date.now(),
-      });
-    }
+      },
+    ];
+
     this.render();
     pubsub.pub('member:join', this.members);
   }
 
-  ioLeaveRoom(user) {
-    this.members = this.members.filter(member => member.username !== user.username);
+  ioLeaveRoom(data) {
+    this.members = this.members.filter(member => member.username !== data.user.username);
     this.render();
     pubsub.pub('room:leave', this.members);
   }
@@ -115,21 +110,23 @@ class MemberList {
   }
 
   ioChangeStatus(user) {
-    const idx = this.members.findIndex(member => member.id === user.id);
-    const member = this.members[idx];
+    this.members = this.members.map(member =>
+      member.id !== user.id ? member : { ...member, ...user },
+    );
 
-    this.members.splice(idx, 1);
-    this.members.push({ ...member, ...user });
-
-    this.render();
+    if (this.selected) {
+      this.selectMember(this.selected);
+    } else {
+      this.render();
+    }
   }
 
   render() {
-    this.members = this.members
+    const members = this.members
       .map(member => ({ ...member, selected: member.id === this.selected }))
       .sort((a, b) => a.username.localeCompare(b.username))
       .sort((a, b) => +b.online - +a.online);
-    this.elem.innerHTML = memberListTemplate({ members: this.members });
+    this.elem.innerHTML = template({ members });
     this.setHandlers();
   }
 }
