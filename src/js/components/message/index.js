@@ -1,3 +1,4 @@
+import { getUserAvatar } from 'Utils/helpers';
 import templateActions from 'Templates/message-actions';
 import EditCommand from './commands/editCommand';
 import DeleteCommand from './commands/deleteCommand';
@@ -6,31 +7,34 @@ import SpeakCommand from './commands/speakCommand';
 class Message {
   constructor({
     id,
+    elem = null,
     sender = null,
     receiver = null,
     text = '',
     timestamp = Date.now(),
     room = null,
     automated = false,
+    editing = false,
     edited = false,
     read = false,
     avatar = null,
+    hasChanges = false,
+    rendered = false,
   } = {}) {
-    this.elem = null;
     this.id = id;
+    this.elem = elem;
     this.sender = sender;
     this.receiver = receiver;
     this.text = text;
     this.timestamp = timestamp;
     this.room = room;
     this.automated = automated;
+    this.editing = editing;
     this.edited = edited;
     this.read = read;
-    this.rendered = false;
-    this.editing = false;
-    this.hasChanges = false;
-    this.deleted = false;
-    this.avatar = avatar || `https://api.adorable.io/avatars/72/${this.sender}.png`;
+    this.hasChanges = hasChanges;
+    this.rendered = rendered;
+    this.avatar = getUserAvatar({ username: sender, avatar }, 72);
   }
 
   renderActions(data) {
@@ -56,13 +60,13 @@ class Message {
 
       switch (action) {
         case 'edit':
-          command = new EditCommand(this);
+          command = new EditCommand(new Message(this));
           break;
         case 'delete':
-          command = new DeleteCommand(this);
+          command = new DeleteCommand(new Message(this));
           break;
         case 'speak':
-          command = new SpeakCommand(this);
+          command = new SpeakCommand(new Message(this));
           break;
         default:
           break;
@@ -73,7 +77,7 @@ class Message {
   }
 
   render(implementor) {
-    return implementor.output(this);
+    return implementor.output(new Message(this));
   }
 }
 
