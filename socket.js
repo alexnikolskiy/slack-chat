@@ -5,6 +5,34 @@ const Message = require('./models/message');
 module.exports = io => {
   const typingUsers = {};
 
+  async function joinRoom(socket) {
+    const message = new Message({
+      sender: socket.user._id,
+      text: `joined #${socket.user.room.name}`,
+      room: socket.user.room._id,
+      automated: true,
+    });
+
+    await message.save();
+
+    socket.to(`room:${socket.user.room.name}`).emit('room:join', {
+      message: {
+        id: message._id,
+        text: `joined #${socket.user.room.name}`,
+      },
+      user: {
+        id: socket.user._id,
+        username: socket.user.username,
+        avatar: socket.user.avatar,
+        online: socket.user.online,
+      },
+      room: {
+        id: socket.user.room._id,
+        name: socket.user.room.name,
+      },
+    });
+  }
+
   function init() {
     io.use(async (socket, next) => {
       if (!socket.request.session.user) return next();
@@ -15,6 +43,9 @@ module.exports = io => {
         if (!socket.user.room) {
           socket.user.room = await Room.findOne({});
           await socket.user.save();
+
+          await joinRoom(socket);
+          socket.emit('member:join', socket.user.room._id);
         }
 
         return next();
@@ -24,40 +55,40 @@ module.exports = io => {
     });
 
     io.on('connection', async socket => {
-      socket.join(`room:${socket.user.room.name}`);
+      if (!socket.user) {
+        return;
+      }
 
-      socket.user.online = true;
-      socket.user.socket = socket.id;
-      await socket.user.save();
+      socket.join(`room:${socket.user.room.name}`, async () => {
+        socket.user.online = true;
+        socket.user.socket = socket.id;
+        await socket.user.save();
 
-      const user = {
-        id: socket.user._id,
-        username: socket.user.username,
-        online: socket.user.online,
-        room: socket.user.room._id,
-        socket: socket.user.socket,
-      };
+        const user = {
+          id: socket.user._id,
+          username: socket.user.username,
+          online: socket.user.online,
+          room: socket.user.room._id,
+          avatar: socket.user.avatar,
+          socket: socket.user.socket,
+        };
 
-      socket.emit('login', user);
-
-      socket.to(`room:${socket.user.room.name}`).emit('online', user);
+        socket.emit('login', user);
+        socket.to(`room:${socket.user.room.name}`).emit('online', user);
+      });
 
       socket.on('room:join', async roomId => {
         try {
           const previousRoom = socket.user.room;
           const newRoom = await Room.findById(roomId);
 
-          socket.join(`room:${newRoom.name}`);
           socket.user.room = newRoom;
           await socket.user.save();
 
-          const newMessage = new Message({
-            sender: socket.user._id,
-            text: `joined #${newRoom.name}`,
-            room: newRoom._id,
-            automated: true,
+          socket.join(`room:${newRoom.name}`, async () => {
+            await joinRoom(socket);
+            socket.emit('member:join', newRoom._id);
           });
-          await newMessage.save();
 
           Object.keys(socket.rooms)
             .filter(room => room.includes('room:') && !room.includes(socket.user.room.name))
@@ -73,44 +104,35 @@ module.exports = io => {
                 await message.save();
 
                 socket.to(room).emit('room:leave', {
-                  id: socket.user._id,
-                  username: socket.user.username,
-                  online: socket.user.online,
+                  message: {
+                    id: message._id,
+                    text: `left #${previousRoom.name}`,
+                  },
+                  user: {
+                    id: socket.user._id,
+                    username: socket.user.username,
+                    avatar: socket.user.avatar,
+                    online: socket.user.online,
+                  },
                   room: {
                     id: previousRoom._id,
                     name: previousRoom.name,
                   },
-                  message: message._id,
-                  socket: socket.user.socket,
                 });
               }),
             );
-
-          socket.to(`room:${newRoom.name}`).emit('room:join', {
-            id: socket.user._id,
-            username: socket.user.username,
-            online: socket.user.online,
-            room: {
-              id: socket.user.room._id,
-              name: socket.user.room.name,
-            },
-            message: newMessage._id,
-            socket: socket.user.socket,
-          });
-          socket.emit('member:join', {
-            id: newRoom._id,
-            name: newRoom.name,
-          });
         } catch (err) {
           throw new Error(err.message);
         }
       });
 
-      socket.on('message:add', async (text, sender = null, receiver = null) => {
+      socket.on('message:add', async (text, receiver = null) => {
         const message = new Message({
-          sender: sender ? sender.id : socket.user._id,
+          sender: socket.user._id,
+          // sender: sender.id,
           text,
           room: socket.user.room._id,
+          // room: sender.room,
           receiver: receiver ? receiver.id : null,
         });
 
@@ -118,27 +140,38 @@ module.exports = io => {
 
         const sendMsg = {
           id: message._id,
-          sender: sender ? sender.username : socket.user.username,
+          sender: socket.user.username,
+          // sender: sender.username,
+          avatar: socket.user.avatar,
+          // avatar: sender.avatar,
+          receiver: receiver ? receiver.username : null,
           text,
           timestamp: message.timestamp,
           room: socket.user.room._id,
+          // room: sender.room,
         };
 
         if (!receiver) {
-          io.in(`room:${socket.user.room.name}`).emit('message:add', sendMsg, false);
+          io.in(`room:${socket.user.room.name}`).emit('message:add', sendMsg);
         } else {
-          if (receiver.username !== sender.username) {
-            socket.emit('message:add', sendMsg, true);
+          let receiverUser = socket.user;
+
+          if (socket.user.username !== receiver.username) {
+            // receiverUser = await User.findById(receiver.id);
+            receiverUser = receiver;
+            socket.emit('message:add', sendMsg);
           }
-          io.to(receiver.socket).emit('message:add', sendMsg, true);
+
+          // const receiverUser = await User.findById(receiver.id);
+          io.to(receiverUser.socket).emit('message:add', sendMsg);
         }
       });
 
       socket.on('editor:typing', (receiver = null) => {
-        let users;
         const key = receiver
           ? `${socket.user.username}-${receiver.username}`
           : socket.user.room.name;
+        let users;
 
         if (!typingUsers[key]) {
           typingUsers[key] = new Set();
@@ -193,6 +226,10 @@ module.exports = io => {
       socket.on('message:delete', async id => {
         await Message.findByIdAndDelete(id);
         socket.to(`room:${socket.user.room.name}`).emit('message:delete', id);
+      });
+
+      socket.on('member:edit', member => {
+        io.in(`room:${socket.user.room.name}`).emit('member:edit', member);
       });
 
       socket.on('disconnect', async () => {
