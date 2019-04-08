@@ -1,3 +1,4 @@
+import escape from 'validator/lib/escape';
 import template from 'Templates/editor';
 import pubsub from 'Utils/pubsub';
 import io from 'Utils/io';
@@ -66,6 +67,7 @@ class Editor {
           pubsub.pub('editor:new-line');
         } else {
           ev.preventDefault();
+          input.value = escape(input.value);
           input.value = input.value.replace(/\r?\n/g, '<br>');
           pubsub.pub('message:write', input.value);
           io.emit('editor:stop-typing', this.receiver);
