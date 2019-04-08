@@ -33,9 +33,10 @@
   }
 
   &_repeated {
+    padding-top: 2px;
 
     .message__body {
-      margin-top: 0;
+      //margin-top: 0;
     }
 
     .message__time {
@@ -65,6 +66,7 @@
   padding-right: 8px;
   float: left;
   text-align: right;
+  line-height: 1.3rem;
 }
 
 .message__avatar-image {
@@ -77,10 +79,12 @@
 .message__content {
   margin-left: 70px;
   margin-right: 20px;
+  margin-top: -9px;
 }
 
 .message__header {
   line-height: 1;
+  margin: 9px 0 -5px;
 }
 
 .message__sender {
@@ -102,6 +106,7 @@
 .message__time {
   font-size: 12px;
   color: #717274;
+  line-height: 1.4;
 }
 
 .message__body {
@@ -110,7 +115,9 @@
   color: #2c2d30;
   word-wrap: break-word;
   text-align: left;
-  margin-top: 4px;
+  //margin-top: 4px;
+  margin: 9px 0 -4px;
+  line-height: 1.4;
 }
 
 .message__edited {
@@ -176,6 +183,14 @@
   justify-content: center;
 }
 
+.message__editor {
+  margin: 8px 0 0;
+}
+
+.message__editor-footer {
+  font-size: 0;
+}
+
 .message__editor-input-container {
   position: relative;
   background: #fff;
@@ -203,6 +218,10 @@
   border-radius: 4px;
   padding: 9px;
   line-height: 22px;
+}
+
+.message__editor-save {
+  margin-left: 8px;
 }
 
 .message__unread-separator {

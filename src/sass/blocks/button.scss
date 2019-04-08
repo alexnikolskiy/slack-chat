@@ -1,9 +1,8 @@
 .button {
   text-decoration: none;
-  font-size: 13px;
-  height: 28px;
-  min-width: 56px;
-  padding: 0 12px 1px;
+  font-size: 15px;
+  min-width: 132px;
+  padding: 8px 14px 9px;
   transition: all 80ms linear;
   background: #fff;
   box-shadow: inset 0 0 0 1px rgba(44,45,48, 0.3);
@@ -20,7 +19,8 @@
   justify-content: center;
   text-align: center;
   white-space: nowrap;
-  line-height: 24px;
+  //line-height: 24px;
+  line-height: 1.2rem;
 
   &:hover {
     box-shadow: inset 0 0 0 1px rgba(44,45,48,0.3),
@@ -35,6 +35,7 @@
   &_primary {
     background: #008952;
     color: #fff;
+    font-weight: 900;
   }
 
   &_primary:hover {
@@ -43,6 +44,27 @@
 
   &_primary:active {
     background: #057f4e;
+    box-shadow: none;
+  }
+
+  &_small {
+    font-size: 13px;
+    min-width: 56px;
+    padding: 0 12px 1px;
+    line-height: 1.8rem;
+  }
+
+  &_medium {
+    font-size: 15px;
+    height: 36px;
+    min-width: 80px;
+    padding: 0 12px 1px;
+  }
+
+  &_danger {
+    background: #e01e5a;
+    color: #fff;
+    font-weight: 900;
     box-shadow: none;
   }
 }
