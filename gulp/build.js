@@ -1,21 +1,18 @@
 const gulp = require('gulp');
 const plugins = require('gulp-load-plugins')({ lazy: true });
-const yargs = require('yargs');
 const del = require('del');
 const include = require('posthtml-include');
 const webpack = require('webpack');
-const gulpWebpack = require('webpack-stream');
+const webpackStream = require('webpack-stream');
 const normalize = require('node-normalize-scss');
 
 const paths = require('./paths');
 const webpackConfig = require('../webpack.config.js');
 
-const isDevelopment = !yargs.argv.release;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 webpackConfig.mode = isDevelopment ? 'development' : 'production';
-if (isDevelopment) {
-  webpackConfig.devtool = 'inline-source-map';
-}
+webpackConfig.devtool = isDevelopment ? 'inline-source-map' : false;
 
 function clean() {
   return del('build');
@@ -85,8 +82,8 @@ function copy() {
 
 function js() {
   return gulp
-    .src(`${paths.src.js}index.js`)
-    .pipe(gulpWebpack(webpackConfig, webpack))
+    .src(`${paths.src.js}*.js`)
+    .pipe(webpackStream(webpackConfig, webpack))
     .pipe(gulp.dest(paths.dest.js));
 }
 
