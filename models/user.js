@@ -41,4 +41,14 @@ UserSchema.methods.validatePassword = async function validate(password) {
   return isValid;
 };
 
+UserSchema.methods.toJSONFor = function toJSONFor(room) {
+  return {
+    id: this._id,
+    username: this.username,
+    room: room ? room.toJSONFor() : this.room.toJSONFor(),
+    online: this.online,
+    avatar: this.avatar,
+  };
+};
+
 module.exports = mongoose.model('User', UserSchema);
