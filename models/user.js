@@ -24,14 +24,21 @@ const UserSchema = new Schema({
   socket: {
     type: String,
   },
+  avatar: {
+    type: String,
+  },
 });
 
 UserSchema.methods.generateHash = async password => {
-  await bcrypt.hash(password, 10);
+  const hash = await bcrypt.hash(password, 10);
+
+  return hash;
 };
 
 UserSchema.methods.validatePassword = async function validate(password) {
-  await bcrypt.compare(password, this.password);
+  const isValid = await bcrypt.compare(password, this.password);
+
+  return isValid;
 };
 
 module.exports = mongoose.model('User', UserSchema);
