@@ -2,9 +2,9 @@ version: 2
 jobs:
   build:
     docker:
-      - image circleci/node:10.13
+      - image: circleci/node:10.13
 
-    working_directory: ~/slack-chat
+    working_directory: ~/chat
 
     steps:
       - checkout
@@ -22,6 +22,14 @@ jobs:
             - ./node_modules
 
       - run:
+          name: rename config
+          command: mv ~/chat/config.dist.js ~/chat/config.js
+
+      - run:
+          name: build templates
+          command: npx gulp templates
+
+      - run:
           name: stylelint
           command: npm run stylelint
 
@@ -37,7 +45,7 @@ jobs:
       - run:
           name: Deploy Over SSH
           command: |
-            ssh -oStrictHostKeyChecking=no -v sysadmin@nikolskiy.me './deploy_slack_chat.sh'
+            ssh -oStrictHostKeyChecking=no -v $SSH_USER@$SSH_HOST -p $SSH_PORT "~/deploy_slack_chat.sh"
 
 workflows:
   version: 2
