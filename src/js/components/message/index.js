@@ -1,4 +1,5 @@
-import { getUserAvatar } from 'Utils/helpers';
+import { getUserAvatar } from 'Utils/ui';
+import { htmlToElement } from 'Utils/helpers';
 import templateActions from 'Templates/message-actions';
 import EditCommand from './commands/editCommand';
 import DeleteCommand from './commands/deleteCommand';
@@ -17,9 +18,10 @@ class Message {
     editing = false,
     edited = false,
     read = false,
-    avatar = null,
+    // avatar = null,
     hasChanges = false,
     rendered = false,
+    pubsub = null,
   } = {}) {
     this.id = id;
     this.elem = elem;
@@ -34,46 +36,52 @@ class Message {
     this.read = read;
     this.hasChanges = hasChanges;
     this.rendered = rendered;
-    this.avatar = getUserAvatar({ username: sender, avatar }, 72);
+    // this.avatar = getUserAvatar(
+    //   { ...this.sender, avatar: (this.sender && this.sender.avatar) || avatar },
+    //   72,
+    // );
+    this.pubsub = pubsub;
+    this.handleActionButtonClick = this.handleActionButtonClick.bind(this);
+  }
+
+  get avatar() {
+    // return getUserAvatar({ ...this.sender, avatar: this.sender && this.sender.avatar }, 72);
+    return getUserAvatar(this.sender, 72);
   }
 
   renderActions(data) {
-    const html = templateActions(data);
-    const div = document.createElement('div');
+    const html = htmlToElement(templateActions(data));
 
-    div.innerHTML = html;
-    this.setActionsHandlers(div.firstElementChild);
+    html.addEventListener('click', this.handleActionButtonClick);
 
-    return div.firstElementChild;
+    return html;
   }
 
-  setActionsHandlers(elem) {
-    elem.addEventListener('click', ev => {
-      const button = ev.target.closest('.message__action');
+  handleActionButtonClick(ev) {
+    const btn = ev.target.closest('button');
 
-      if (!button) {
-        return;
-      }
+    if (!btn) {
+      return;
+    }
 
-      const { action } = button.dataset;
-      let command;
+    const { action } = btn.dataset;
+    let command;
 
-      switch (action) {
-        case 'edit':
-          command = new EditCommand(new Message(this));
-          break;
-        case 'delete':
-          command = new DeleteCommand(new Message(this));
-          break;
-        case 'speak':
-          command = new SpeakCommand(new Message(this));
-          break;
-        default:
-          break;
-      }
+    switch (action) {
+      case 'edit':
+        command = new EditCommand(new Message(this));
+        break;
+      case 'delete':
+        command = new DeleteCommand(new Message(this));
+        break;
+      case 'speak':
+        command = new SpeakCommand(new Message(this));
+        break;
+      default:
+        throw new Error('Unknown command');
+    }
 
-      command.execute();
-    });
+    command.execute();
   }
 
   render(implementor) {

@@ -1,78 +1,93 @@
-import pubsub from 'Utils/pubsub';
-import io from 'Utils/io';
 import Message from './message/index';
 import MessageNewOutput from './message/output/messageNewOutput';
 import MessageEditOutput from './message/output/messageEditOutput';
 import MessageOutput from './message/output/messageOutput';
 import MessageRepeatedOutput from './message/output/messageRepeatedOutput';
+import store from '../store';
+import Component from '../lib/component';
+import { getRoomMessages, getPrivateMessages } from '../services/room';
 
-class MessageList {
-  constructor() {
-    this._messages = [];
-    this.sender = null;
+class MessageList extends Component {
+  constructor(io, pubsub) {
+    super({
+      store,
+      elem: document.querySelector('.chat-box__body-list'),
+    });
 
-    this.elem = document.querySelector('.chat-box__body-list');
+    this.state = {
+      messages: [],
+    };
+    this.io = io;
+    this.pubsub = pubsub;
+
+    this.handleMessageMouseOver = this.handleMessageMouseOver.bind(this);
+    this.handleMessageMouseOut = this.handleMessageMouseOut.bind(this);
     this.setHandlers();
 
-    io.on('login', this.ioLogin.bind(this));
-    io.on('room:join', this.ioJoinOrLeaveRoom.bind(this));
-    io.on('room:leave', this.ioJoinOrLeaveRoom.bind(this));
-    io.on('message:edit', this.ioEditMessage.bind(this));
-    io.on('message:delete', this.ioDeleteMessage.bind(this));
-    io.on('member:edit', this.ioMemberEdit.bind(this));
+    this.io.on('room:join', this.ioJoinOrLeaveRoom.bind(this));
+    this.io.on('room:leave', this.ioJoinOrLeaveRoom.bind(this));
+    this.io.on('message:add', this.ioAddMessage.bind(this));
+    this.io.on('message:edit', this.ioEditMessage.bind(this));
+    this.io.on('message:delete', this.ioDeleteMessage.bind(this));
+    this.io.on('member:edit', this.ioMemberEdit.bind(this));
 
-    pubsub.sub('message:add', this.handleAddMessage.bind(this));
-    pubsub.sub('message:edit', this.handleEditMessage.bind(this));
-    pubsub.sub('message:cancel', this.handleCancelEditMessage.bind(this));
-    pubsub.sub('message:save', this.handleSaveMessage.bind(this));
-    pubsub.sub('message:edit-last', this.handleEditLastMessage.bind(this));
-    pubsub.sub('message:delete', this.handleDeleteMessage.bind(this));
-    pubsub.sub('message:load', this.handleLoadMessages.bind(this));
-    pubsub.sub('editor:new-line', this.scroll.bind(this));
+    this.pubsub.sub('message:add', this.handleAddMessage.bind(this));
+    this.pubsub.sub('message:edit', this.handleEditMessage.bind(this));
+    this.pubsub.sub('message:cancel', this.handleCancelEditMessage.bind(this));
+    this.pubsub.sub('message:save', this.handleSaveMessage.bind(this));
+    this.pubsub.sub('message:edit-last', this.handleEditLastMessage.bind(this));
+    this.pubsub.sub('message:delete', this.handleDeleteMessage.bind(this));
+    this.pubsub.sub('editor:new-line', this.scroll.bind(this));
+    this.pubsub.sub('room:select', this.handleSelectRoom.bind(this));
+    this.pubsub.sub('member:select', this.selectMember.bind(this));
+  }
+
+  handleMessageMouseOver(ev) {
+    const messageElem = ev.target.closest('.message');
+
+    if (!messageElem || messageElem.classList.contains('message_editing')) {
+      return;
+    }
+
+    const messageId = messageElem.dataset.id;
+    const actionsElem = messageElem.getElementsByClassName('message__action-list')[0];
+
+    if (!actionsElem && messageId) {
+      const message = this.state.messages.find(msg => msg.id === messageId);
+      const { sender } = store.getState();
+
+      if (!message) {
+        return;
+      }
+
+      const isOwnMessage = message.sender.username === sender.username;
+      messageElem.append(message.renderActions({ isOwnMessage, isAutomated: message.automated }));
+    }
+  }
+
+  handleMessageMouseOut(ev) {
+    const messageElem = ev.target.closest('.message');
+
+    if (!messageElem || messageElem.classList.contains('message_editing')) {
+      return;
+    }
+
+    let where = null;
+    if (ev.relatedTarget) {
+      where = ev.relatedTarget.closest('.message__action-list');
+    }
+
+    const elems = this.elem.querySelectorAll('.message__action-list');
+    elems.forEach(elem => {
+      if (elem !== where) {
+        elem.parentElement.removeChild(elem);
+      }
+    });
   }
 
   setHandlers() {
-    this.elem.addEventListener('mouseover', ev => {
-      const messageElem = ev.target.closest('.message');
-
-      if (!messageElem || messageElem.classList.contains('message_editing')) {
-        return;
-      }
-
-      const messageId = messageElem.dataset.id;
-      const actionsElem = messageElem.getElementsByClassName('message__action-list')[0];
-
-      if (!actionsElem && messageId) {
-        const message = this.messages.find(msg => msg.id === messageId);
-
-        if (!message) {
-          return;
-        }
-
-        const isOwnMessage = message.sender === this.sender.username;
-        messageElem.append(message.renderActions({ isOwnMessage, isAutomated: message.automated }));
-      }
-    });
-
-    this.elem.addEventListener('mouseout', ev => {
-      const messageElem = ev.target.closest('.message');
-
-      if (!messageElem || messageElem.classList.contains('message_editing')) {
-        return;
-      }
-
-      let where = null;
-      if (ev.relatedTarget) {
-        where = ev.relatedTarget.closest('.message__action-list');
-      }
-
-      const elems = this.elem.querySelectorAll('.message__action-list');
-      elems.forEach(elem => {
-        if (elem !== where) {
-          elem.parentElement.removeChild(elem);
-        }
-      });
-    });
+    this.elem.addEventListener('mouseover', this.handleMessageMouseOver);
+    this.elem.addEventListener('mouseout', this.handleMessageMouseOut);
 
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
@@ -100,46 +115,58 @@ class MessageList {
     });
   }
 
-  get messages() {
-    return this._messages;
-  }
-
-  set messages(messages) {
-    this._messages = messages;
-    this.render();
-  }
-
-  async ioLogin(user) {
-    this.sender = user;
-  }
-
-  ioJoinOrLeaveRoom(data) {
-    const message = new Message({
-      id: data.message.id,
-      sender: data.user.username,
-      avatar: data.user.avatar,
-      text: data.message.text,
+  ioJoinOrLeaveRoom({ message, user }) {
+    const newMessage = new Message({
+      id: message.id,
+      sender: user,
+      text: message.text,
       automated: true,
     });
 
-    this.messages = [...this.messages, message];
+    this.setState({
+      messages: [...this.state.messages, newMessage],
+    });
+  }
+
+  ioAddMessage(message) {
+    const isPrivateMessage = !!message.receiver;
+    const { sender, receiver } = store.getState();
+    const isPrivateChatting = !!receiver;
+
+    if (
+      ((!isPrivateChatting && isPrivateMessage) || // if private message, but we in the room
+      (isPrivateChatting && !isPrivateMessage) || // if not private message, but we are writing a private message
+        (isPrivateChatting &&
+        isPrivateMessage && // if private message from one user, but we are chatting with another one and not with yourself
+          receiver.username !== message.sender.username &&
+          sender.username !== receiver.username)) &&
+      sender.username !== message.sender.username
+    ) {
+      return;
+    }
+
+    this.setState({
+      messages: [...this.state.messages, new Message({ ...message, read: true })],
+    });
   }
 
   ioEditMessage(message) {
-    this.messages = this.messages.map(msg =>
-      msg.id !== message.id
-        ? msg
-        : new Message({
-            ...msg,
-            text: message.text,
-            edited: true,
-            hasChanges: true,
-          }),
-    );
+    this.setState({
+      messages: this.state.messages.map(msg =>
+        msg.id !== message.id
+          ? msg
+          : new Message({
+              ...msg,
+              text: message.text,
+              edited: true,
+              hasChanges: true,
+            }),
+      ),
+    });
   }
 
   ioDeleteMessage(id) {
-    const message = this.messages.find(msg => msg.id === id);
+    const message = this.state.messages.find(msg => msg.id === id);
 
     if (!message) {
       return;
@@ -149,93 +176,137 @@ class MessageList {
   }
 
   ioMemberEdit(member) {
-    const messages = this.messages
-      .filter(msg => msg.sender === member.username)
+    const messages = this.state.messages
+      .filter(msg => msg.sender.username === member.username)
       .map(
         msg =>
           new Message({
             ...msg,
-            avatar: member.avatar,
+            sender: member,
             hasChanges: true,
             elem: msg.elem,
           }),
       );
 
-    this.messages = [...this.messages.filter(msg => msg.sender !== member.username), ...messages];
+    this.setState({
+      messages: [
+        ...this.state.messages.filter(msg => msg.sender.username !== member.username),
+        ...messages,
+      ],
+    });
   }
 
   handleAddMessage(message) {
-    this.messages = [...this.messages, new Message({ ...message, read: true })];
+    this.setState({
+      messages: [...this.state.messages, new Message({ ...message, read: true })],
+    });
+  }
+
+  setMessage(message) {
+    this.setState({
+      messages: this.state.messages.map(msg => (msg.id !== message.id ? msg : message)),
+    });
   }
 
   handleEditMessage(message) {
-    this.messages = this.messages.map(msg => (msg.id !== message.id ? msg : message));
+    this.setMessage(message);
   }
 
   handleCancelEditMessage(message) {
-    this.messages = this.messages.map(msg => (msg.id !== message.id ? msg : message));
+    this.setMessage(message);
   }
 
   handleSaveMessage(message, hasChanges) {
-    this.messages = this.messages.map(msg => (msg.id !== message.id ? msg : message));
+    this.setMessage(message);
 
     if (hasChanges) {
-      io.emit('message:edit', message);
+      this.io.emit('message:edit', message);
     }
   }
 
   handleEditLastMessage() {
-    const message = this.messages
+    const { sender } = store.getState();
+    const message = this.state.messages
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .find(msg => msg.sender === this.sender.username && !msg.automated);
+      .find(msg => msg.sender.username === sender.username && !msg.automated);
 
     if (!message) {
       return;
     }
 
-    this.messages = this.messages.map(msg =>
-      msg.id !== message.id
-        ? msg
-        : new Message({
-            ...message,
-            editing: true,
-            hasChanges: true,
-          }),
-    );
+    this.setState({
+      messages: this.state.messages.map(msg =>
+        msg.id !== message.id
+          ? msg
+          : new Message({
+              ...message,
+              editing: true,
+              hasChanges: true,
+            }),
+      ),
+    });
   }
 
   handleDeleteMessage(message) {
     this.deleteMessage(message);
-    io.emit('message:delete', message.id);
+    this.io.emit('message:delete', message.id);
   }
 
   deleteMessage(message) {
     let messages;
-    const idx = this.messages.findIndex(msg => msg.id === message.id);
+    const idx = this.state.messages.findIndex(msg => msg.id === message.id);
 
     this.elem.removeChild(message.elem);
-    messages = this.messages.filter(msg => msg.id !== message.id);
+    messages = this.state.messages.filter(msg => msg.id !== message.id);
 
     if (messages[idx]) {
       messages = [
         ...messages.slice(0, idx),
         new Message({ ...messages[idx], hasChanges: true }),
-        ...messages.slice(idx),
+        ...messages.slice(idx + 1),
       ];
     }
 
-    this.messages = messages;
+    this.setState({ messages });
   }
 
   handleLoadMessages(messages = []) {
     this.elem.innerHTML = '';
-    this.messages = messages.map(message => new Message(message));
+    this.setState({
+      messages: messages.map(message => new Message(message)),
+    });
     this.scroll(true);
+  }
+
+  async handleSelectRoom(room, lastVisit) {
+    this.state.messages = [];
+
+    let messages = await getRoomMessages(room.id);
+
+    messages = messages.map(message => ({
+      ...message,
+      read: new Date(message.timestamp).getTime() <= new Date(lastVisit).getTime(),
+    }));
+
+    this.handleLoadMessages(messages);
+  }
+
+  async selectMember(member) {
+    const { sender } = store.getState();
+    let messages = await getPrivateMessages(sender.room.id, member.id);
+
+    messages = messages.map(message => ({
+      ...message,
+      read: new Date(message.timestamp).getTime() <= new Date(member.lastVisit).getTime(),
+    }));
+
+    this.handleLoadMessages(messages);
   }
 
   scroll(clear = false) {
     const parentElem = this.elem.parentElement;
-    const lastMessage = this.messages[this.messages.length - 1];
+    const lastMessage = this.state.messages[this.state.messages.length - 1];
+    const { sender } = store.getState();
 
     if (!lastMessage) {
       return;
@@ -246,7 +317,7 @@ class MessageList {
 
     if (
       height === parentElem.scrollHeight ||
-      lastMessage.sender === this.sender.username ||
+      lastMessage.sender.username === sender.username ||
       clear
     ) {
       parentElem.scrollTop = parentElem.scrollHeight;
@@ -257,32 +328,36 @@ class MessageList {
     let prevSender;
     let isSetNewMessagesLabel = false;
 
-    this._messages = this._messages
+    if (!this.state.messages) {
+      return;
+    }
+
+    this.state.messages = this.state.messages
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       .map(message => {
         let newElem;
 
         if (message.rendered && !message.hasChanges) {
-          prevSender = message.sender;
+          prevSender = message.sender.username;
           return message;
         }
 
         if (message.editing) {
           newElem = message.render(new MessageEditOutput());
-        } else if (message.sender !== prevSender) {
+        } else if (message.sender.username !== prevSender) {
           newElem = message.render(new MessageOutput());
         } else {
           newElem = message.render(new MessageRepeatedOutput());
         }
 
-        prevSender = message.sender;
+        prevSender = message.sender.username;
 
-        return new Message({ ...message, elem: newElem });
+        return new Message({ ...message, elem: newElem, pubsub: this.pubsub });
       });
 
-    this._messages.forEach(message => {
+    this.state.messages.forEach(message => {
       if (message.rendered && !message.hasChanges) {
-        prevSender = message.sender;
+        prevSender = message.sender.username;
         return;
       }
 
@@ -296,13 +371,16 @@ class MessageList {
         this.elem.appendChild(message.elem);
       } else {
         const elem = this.elem.querySelector(`li[data-id="${message.id}"]`);
-        elem.replaceWith(message.elem);
+
+        if (elem) {
+          elem.replaceWith(message.elem);
+        }
       }
 
-      prevSender = message.sender;
+      prevSender = message.sender.username;
     });
 
-    this._messages = this._messages.map(
+    this.state.messages = this.state.messages.map(
       message => new Message({ ...message, read: true, rendered: true }),
     );
 

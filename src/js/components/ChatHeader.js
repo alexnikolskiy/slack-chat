@@ -1,30 +1,57 @@
 import template from 'Templates/chat-header';
-import pubsub from 'Utils/pubsub';
-import io from 'Utils/io';
+import store from '../store';
+import Component from '../lib/component';
 
-class ChatHeader {
-  constructor() {
-    this.elem = document.querySelector('.chat-box__header');
+class ChatHeader extends Component {
+  constructor(io, pubsub) {
+    super({
+      store,
+      elem: document.querySelector('.chat-box__header'),
+    });
+
     this.state = {
       title: '',
       info: '',
-      isLoggedUser: false,
-      isMember: false,
       online: false,
+      isMember: false,
     };
+    this.io = io;
+    this.pubsub = pubsub;
 
-    pubsub.sub('room:leave', this.handleLeaveRoom.bind(this));
-    pubsub.sub('room:select', this.handleSelectRoom.bind(this));
-    pubsub.sub('member:join', this.handleMemberJoin.bind(this));
-    pubsub.sub('member:select', this.handleMemberSelect.bind(this));
+    this.pubsub.sub('room:leave', this.handleLeaveRoom.bind(this));
+    this.pubsub.sub('room:select', this.handleSelectRoom.bind(this));
+    this.pubsub.sub('member:join', this.handleMemberJoin.bind(this));
+    this.pubsub.sub('member:select', this.handleMemberSelect.bind(this));
 
-    io.on('online', this.ioChangeStatus.bind(this));
-    io.on('offline', this.ioChangeStatus.bind(this));
+    this.io.on('online', this.ioChangeStatus.bind(this));
+    this.io.on('offline', this.ioChangeStatus.bind(this));
   }
 
-  getInfo(data, isMember) {
+  getTitle(data) {
     if (!data) {
-      return '';
+      return this.state.title;
+    }
+
+    const { sender, receiver } = store.getState();
+    const isPrivateChatting = !!receiver;
+    let title;
+
+    if (isPrivateChatting) {
+      title = data.username;
+
+      if (sender.username === data.username) {
+        title += ' <span class="chat-box__header-you">(you)</span>';
+      }
+    } else {
+      title = `# ${data.name}`;
+    }
+
+    return title;
+  }
+
+  getInfo(data) {
+    if (!data) {
+      return this.state.info;
     }
 
     if (data instanceof Array) {
@@ -35,67 +62,46 @@ class ChatHeader {
     }
 
     const infoText = data.online ? 'online' : 'offline';
-    const isMemberSelected = isMember === undefined ? this.state.isMember : isMember;
+    const { receiver } = store.getState();
+    const isPrivateChatting = !!receiver;
 
-    return `${isMemberSelected ? infoText : this.state.info}`;
+    return `${isPrivateChatting ? infoText : this.state.info}`;
   }
 
   handleMemberJoin(members = []) {
-    this.state = {
-      ...this.state,
+    this.setState({
       info: this.getInfo(members),
-    };
-    this.render();
-  }
-
-  handleJoinRoom(room) {
-    this.state = {
-      ...this.state,
-      title: `# ${room.name}`,
-      info: '',
-      isLoggedUser: false,
-      isMember: false,
-    };
-    this.render();
+    });
   }
 
   handleLeaveRoom(members) {
-    this.state = {
-      ...this.state,
+    this.setState({
       info: this.getInfo(members),
-    };
-    this.render();
+    });
   }
 
   handleSelectRoom(room) {
-    this.state = {
-      ...this.state,
-      title: `# ${room.name}`,
+    this.setState({
+      title: this.getTitle(room),
       info: '',
-      isLoggedUser: false,
       isMember: false,
-    };
+    });
   }
 
   handleMemberSelect(member) {
-    this.state = {
-      ...this.state,
-      title: member.username,
-      info: this.getInfo(member, true),
-      isLoggedUser: member.isLoggedUser,
-      isMember: true,
+    this.setState({
+      title: this.getTitle(member),
+      info: this.getInfo(member),
       online: member.online,
-    };
-    this.render();
+      isMember: true,
+    });
   }
 
   ioChangeStatus(member) {
-    this.state = {
-      ...this.state,
+    this.setState({
       info: this.getInfo(member),
       online: member.online,
-    };
-    this.render();
+    });
   }
 
   render() {

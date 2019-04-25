@@ -10,4 +10,11 @@ const RoomSchema = new Schema({
   },
 });
 
+RoomSchema.methods.toJSONFor = function toJSONFor() {
+  return {
+    id: this._id,
+    name: this.name,
+  };
+};
+
 module.exports = mongoose.model('Room', RoomSchema);

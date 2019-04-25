@@ -1,14 +1,21 @@
+import escape from 'validator/lib/escape';
 import template from 'Templates/editor';
-import pubsub from 'Utils/pubsub';
-import io from 'Utils/io';
 import { debounce, throttle } from '../utils/helpers';
+import { autoExpand } from '../utils/ui';
+import Component from '../lib/component';
+import store from '../store';
 
-class Editor {
-  constructor() {
-    this.elem = document.querySelector('.message-form');
-    this.receiver = null;
+class Editor extends Component {
+  constructor(io, pubsub) {
+    super({
+      store,
+      elem: document.querySelector('.message-form'),
+    });
+
     this.canSpeechRecognize = false;
     this.recognition = null;
+    this.io = io;
+    this.pubsub = pubsub;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -19,70 +26,47 @@ class Editor {
       this.recognition.maxAlternatives = 1;
     }
 
+    this.handleInputKeyDown = this.handleInputKeyDown.bind(this);
     this.setFocus = this.setFocus.bind(this);
+    this.clearValue = this.clearValue.bind(this);
 
-    pubsub.sub('message:cancel', this.setFocus.bind(this));
-    pubsub.sub('message:save', this.setFocus.bind(this));
-    pubsub.sub('member:select', this.handleSelectMember.bind(this));
-    pubsub.sub('room:select', this.handleSelectRoom.bind(this));
+    this.pubsub.sub('message:cancel', this.setFocus);
+    this.pubsub.sub('message:save', this.setFocus);
+    this.pubsub.sub('room:select', this.clearValue);
+    this.pubsub.sub('member:select', this.clearValue);
   }
 
-  setHandlers() {
-    const input = this.elem.querySelector('.message-form__input');
-    const buttonRecord = this.elem.querySelector('.message-form__button_record');
+  handleInputKeyDown(ev, input) {
+    if (ev.keyCode === 13) {
+      if (ev.ctrlKey) {
+        input.value += '\n';
+        this.pubsub.pub('editor:new-line');
+      } else {
+        ev.preventDefault();
 
-    input.focus();
-    input.parentElement.classList.add('message-form__input-wrapper_focus');
+        if (!input.value) {
+          return;
+        }
 
-    input.addEventListener('focus', ev => {
-      ev.target.parentElement.classList.add('message-form__input-wrapper_focus');
-    });
+        const { receiver } = store.getState();
+        let value = escape(input.value);
 
-    input.addEventListener('blur', ev => {
-      ev.target.parentElement.classList.remove('message-form__input-wrapper_focus');
-    });
+        value = value.replace(/\r?\n/g, '<br>');
+        this.io.emit('editor:stop-typing', receiver);
+        this.io.emit('message:add', value, receiver);
+        input.value = '';
+      }
 
-    function onInput(ev) {
-      const maxHeight = Math.ceil(window.innerHeight / 2);
-
-      if (ev.target.scrollHeight <= maxHeight - 20) {
-        const { target } = ev;
-
-        target.style.height = 'auto';
-        target.style.height = `${target.scrollHeight}px`;
+      autoExpand(input, 2);
+    } else if (ev.keyCode === 38) {
+      if (!input.value) {
+        this.pubsub.pub('message:edit-last');
       }
     }
+  }
 
-    input.setAttribute('style', `height: ${input.scrollHeight}px;`);
-    input.addEventListener('input', throttle(onInput, 400), false);
-
-    const onStopTyping = debounce(() => io.emit('editor:stop-typing', this.receiver), 1500);
-
-    input.addEventListener('keydown', ev => {
-      if (ev.keyCode === 13) {
-        if (ev.ctrlKey) {
-          input.value += '\n';
-          onInput(ev);
-          pubsub.pub('editor:new-line');
-        } else {
-          ev.preventDefault();
-          input.value = input.value.replace(/\r?\n/g, '<br>');
-          pubsub.pub('message:write', input.value);
-          io.emit('editor:stop-typing', this.receiver);
-          input.value = '';
-          onInput(ev);
-        }
-      } else if (ev.keyCode === 38) {
-        if (!input.value) {
-          pubsub.pub('message:edit-last');
-        }
-      }
-    });
-
-    input.addEventListener('keypress', () => {
-      io.emit('editor:typing', this.receiver);
-      onStopTyping();
-    });
+  setButtonRecordHandlers(input) {
+    const buttonRecord = this.elem.querySelector('.message-form__button_record');
 
     if (buttonRecord) {
       let text = '';
@@ -110,18 +94,48 @@ class Editor {
     }
   }
 
+  setHandlers() {
+    const input = this.elem.querySelector('.message-form__input');
+
+    input.addEventListener('focus', ev => {
+      ev.target.parentElement.classList.add('message-form__input-wrapper_focus');
+    });
+
+    input.focus();
+
+    input.addEventListener('blur', ev => {
+      ev.target.parentElement.classList.remove('message-form__input-wrapper_focus');
+    });
+
+    input.setAttribute('style', `height: ${input.scrollHeight}px;`);
+    input.addEventListener('input', throttle(() => autoExpand(input, 2), 400), false);
+
+    const onStopTyping = debounce(receiver => {
+      this.io.emit('editor:stop-typing', receiver);
+    }, 1500);
+
+    input.addEventListener('keydown', ev => this.handleInputKeyDown(ev, input));
+
+    input.addEventListener('keypress', () => {
+      const { receiver } = store.getState();
+
+      this.io.emit('editor:typing', receiver);
+      onStopTyping(receiver);
+    });
+
+    this.setButtonRecordHandlers(input);
+  }
+
   setFocus() {
     const input = this.elem.querySelector('.message-form__input');
 
     input.focus();
   }
 
-  handleSelectMember(member) {
-    this.receiver = member;
-  }
+  clearValue() {
+    const input = this.elem.querySelector('.message-form__input');
 
-  handleSelectRoom() {
-    this.receiver = null;
+    input.value = '';
   }
 
   render() {

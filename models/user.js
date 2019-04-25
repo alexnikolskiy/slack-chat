@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new Schema({
   username: {
@@ -39,6 +39,16 @@ UserSchema.methods.validatePassword = async function validate(password) {
   const isValid = await bcrypt.compare(password, this.password);
 
   return isValid;
+};
+
+UserSchema.methods.toJSONFor = function toJSONFor(room) {
+  return {
+    id: this._id,
+    username: this.username,
+    room: room ? room.toJSONFor() : this.room.toJSONFor(),
+    online: this.online,
+    avatar: this.avatar,
+  };
 };
 
 module.exports = mongoose.model('User', UserSchema);

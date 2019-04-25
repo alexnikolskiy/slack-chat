@@ -8,10 +8,7 @@ module.exports = {
       let rooms = [];
 
       rooms = await Room.find();
-      rooms = rooms.map(room => ({
-        id: room._id,
-        name: room.name,
-      }));
+      rooms = rooms.map(room => room.toJSONFor());
 
       res.status(200).json({ success: true, data: rooms });
     } catch (err) {
@@ -20,18 +17,13 @@ module.exports = {
   },
   async getOne(req, res) {
     try {
-      const data = await Room.findById(req.params.id);
+      const room = await Room.findById(req.params.id);
 
-      if (!data) {
+      if (!room) {
         res.status(404).json({ success: false, error: 'Not found' });
       }
 
-      const room = {
-        id: data._id,
-        name: data.name,
-      };
-
-      res.status(200).json({ success: true, data: room });
+      res.status(200).json({ success: true, data: room.toJSONFor() });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
@@ -40,13 +32,8 @@ module.exports = {
     try {
       let members = [];
 
-      members = await User.find({ room: req.params.id });
-      members = members.map(member => ({
-        id: member._id,
-        username: member.username,
-        online: member.online,
-        socket: member.socket,
-      }));
+      members = await User.find({ room: req.params.id }).populate('room');
+      members = members.map(member => member.toJSONFor());
 
       res.status(200).json({ success: true, data: members });
     } catch (err) {
@@ -70,16 +57,7 @@ module.exports = {
         .populate('room')
         .sort('timestamp');
 
-      messages = messages.map(message => ({
-        id: message._id,
-        sender: message.sender.username,
-        avatar: message.sender.avatar,
-        room: message.room ? message.room.name : null,
-        text: message.text,
-        timestamp: message.timestamp,
-        automated: message.automated,
-        edited: message.createdAt.getTime() !== message.updatedAt.getTime(),
-      }));
+      messages = messages.map(message => message.toJSONFor());
 
       res.status(200).json({ success: true, data: messages });
     } catch (err) {
@@ -112,17 +90,7 @@ module.exports = {
         .populate('room')
         .sort('timestamp');
 
-      messages = messages.map(message => ({
-        id: message._id,
-        sender: message.sender.username,
-        avatar: message.sender.avatar,
-        receiver: message.receiver.username,
-        room: message.room ? message.room.name : null,
-        text: message.text,
-        timestamp: message.timestamp,
-        automated: message.automated,
-        edited: message.createdAt.getTime() !== message.updatedAt.getTime(),
-      }));
+      messages = messages.map(message => message.toJSONFor());
 
       res.status(200).json({ success: true, data: messages });
     } catch (err) {

@@ -1,7 +1,11 @@
 export async function getRoomMembers(roomId) {
   try {
-    const response = await fetch(`api/rooms/${roomId}/members`);
+    const response = await fetch(`api/rooms/${roomId}/members`, { credentials: 'same-origin' });
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
 
     return data.data;
   } catch (err) {
@@ -11,8 +15,12 @@ export async function getRoomMembers(roomId) {
 
 export async function getRoomMessages(roomId) {
   try {
-    const response = await fetch(`api/rooms/${roomId}/messages`);
+    const response = await fetch(`api/rooms/${roomId}/messages`, { credentials: 'same-origin' });
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
 
     return data.data;
   } catch (err) {
@@ -22,8 +30,12 @@ export async function getRoomMessages(roomId) {
 
 export async function getRooms() {
   try {
-    const response = await fetch('api/rooms');
+    const response = await fetch('api/rooms', { credentials: 'same-origin' });
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
 
     return data.data;
   } catch (err) {
@@ -33,8 +45,14 @@ export async function getRooms() {
 
 export async function getPrivateMessages(roomId, receiverId) {
   try {
-    const response = await fetch(`api/rooms/${roomId}/messages/${receiverId}`);
+    const response = await fetch(`api/rooms/${roomId}/messages/${receiverId}`, {
+      credentials: 'same-origin',
+    });
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
 
     return data.data;
   } catch (err) {

@@ -8,16 +8,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { action: url, method } = ev.target;
     const form = ev.target;
-    const formData = new URLSearchParams(new FormData(form));
+    let data;
+    let errors = [];
 
-    const response = await fetch(url, {
-      body: formData,
-      method,
-    });
+    try {
+      const response = await fetch(url, {
+        body: new FormData(form),
+        credentials: 'same-origin',
+        method,
+      });
 
-    const data = await response.json();
+      data = await response.json();
 
-    if (!data || data.success || !data.error) {
+      if (data.errors) {
+        errors = errors.concat(data.errors);
+      }
+    } catch (err) {
+      errors.push({ msg: err.message, param: 'username' });
+    }
+
+    if ((data && data.success) || errors.length === 0) {
       let loc = url.replace('.', '');
 
       loc = window.location.pathname.replace(loc, '');
@@ -25,12 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const errors = Object.keys(data.error);
-    errors.forEach(name => {
-      const parent = form.elements[name].parentElement;
+    [...form.elements].forEach(elem => {
+      const parent = elem.parentElement;
+
+      parent.classList.remove('error');
+      parent.dataset.error = '';
+    });
+
+    errors.reverse().forEach(err => {
+      const parent = form.elements[err.param].parentElement;
 
       parent.classList.add('error');
-      parent.dataset.error = data.error[name];
+      parent.dataset.error = err.msg;
     });
   }
 

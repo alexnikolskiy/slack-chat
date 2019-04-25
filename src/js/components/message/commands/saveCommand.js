@@ -1,4 +1,4 @@
-import pubsub from 'Utils/pubsub';
+import escape from 'validator/lib/escape';
 
 class SaveCommand {
   constructor(message, value) {
@@ -7,6 +7,7 @@ class SaveCommand {
   }
 
   execute() {
+    this.value = escape(this.value);
     this.value = this.value.replace(/\r?\n/g, '<br>');
 
     const hasChanges = this.message.text !== this.value;
@@ -16,7 +17,7 @@ class SaveCommand {
     this.message.hasChanges = true;
     this.message.text = this.value;
 
-    pubsub.pub('message:save', this.message, hasChanges);
+    this.message.pubsub.pub('message:save', this.message, hasChanges);
   }
 }
 

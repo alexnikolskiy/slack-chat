@@ -1,6 +1,6 @@
 import { log } from 'debug';
 
-class PubSub {
+export default class PubSub {
   constructor() {
     this.cache = {};
   }
@@ -47,6 +47,10 @@ class PubSub {
       }
     }
   }
+
+  purge() {
+    this.cache = {};
+  }
 }
 
-export default new PubSub();
+// export default new PubSub();

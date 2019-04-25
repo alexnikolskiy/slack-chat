@@ -15,22 +15,13 @@ module.exports = io => {
 
     await message.save();
 
-    socket.to(`room:${socket.user.room.name}`).emit('room:join', {
-      message: {
-        id: message._id,
-        text: `joined #${socket.user.room.name}`,
-      },
-      user: {
-        id: socket.user._id,
-        username: socket.user.username,
-        avatar: socket.user.avatar,
-        online: socket.user.online,
-      },
-      room: {
-        id: socket.user.room._id,
-        name: socket.user.room.name,
-      },
-    });
+    const sendMsg = {
+      message: message.toSocketJSONFor(),
+      user: socket.user.toJSONFor(),
+      room: socket.user.room.toJSONFor(),
+    };
+
+    socket.in(`room:${socket.user.room.name}`).emit('room:join', sendMsg);
   }
 
   function init() {
@@ -45,7 +36,6 @@ module.exports = io => {
           await socket.user.save();
 
           await joinRoom(socket);
-          socket.emit('member:join', socket.user.room._id);
         }
 
         return next();
@@ -64,17 +54,8 @@ module.exports = io => {
         socket.user.socket = socket.id;
         await socket.user.save();
 
-        const user = {
-          id: socket.user._id,
-          username: socket.user.username,
-          online: socket.user.online,
-          room: socket.user.room._id,
-          avatar: socket.user.avatar,
-          socket: socket.user.socket,
-        };
-
-        socket.emit('login', user);
-        socket.to(`room:${socket.user.room.name}`).emit('online', user);
+        socket.emit('login', socket.user.toJSONFor());
+        socket.to(`room:${socket.user.room.name}`).emit('online', socket.user.toJSONFor());
       });
 
       socket.on('room:join', async roomId => {
@@ -87,7 +68,6 @@ module.exports = io => {
 
           socket.join(`room:${newRoom.name}`, async () => {
             await joinRoom(socket);
-            socket.emit('member:join', newRoom._id);
           });
 
           Object.keys(socket.rooms)
@@ -104,20 +84,9 @@ module.exports = io => {
                 await message.save();
 
                 socket.to(room).emit('room:leave', {
-                  message: {
-                    id: message._id,
-                    text: `left #${previousRoom.name}`,
-                  },
-                  user: {
-                    id: socket.user._id,
-                    username: socket.user.username,
-                    avatar: socket.user.avatar,
-                    online: socket.user.online,
-                  },
-                  room: {
-                    id: previousRoom._id,
-                    name: previousRoom.name,
-                  },
+                  message: message.toSocketJSONFor(),
+                  user: socket.user.toJSONFor(),
+                  room: previousRoom.toJSONFor(),
                 });
               }),
             );
@@ -127,100 +96,78 @@ module.exports = io => {
       });
 
       socket.on('message:add', async (text, receiver = null) => {
-        const message = new Message({
+        let message = new Message({
           sender: socket.user._id,
-          // sender: sender.id,
+          receiver: receiver ? receiver.id : null,
           text,
           room: socket.user.room._id,
-          // room: sender.room,
-          receiver: receiver ? receiver.id : null,
         });
 
-        await message.save();
+        message = await message.save();
+        message = await message
+          .populate('sender')
+          .populate('receiver')
+          .populate('room')
+          .execPopulate();
 
-        const sendMsg = {
-          id: message._id,
-          sender: socket.user.username,
-          // sender: sender.username,
-          avatar: socket.user.avatar,
-          // avatar: sender.avatar,
-          receiver: receiver ? receiver.username : null,
-          text,
-          timestamp: message.timestamp,
-          room: socket.user.room._id,
-          // room: sender.room,
-        };
+        const sendMsg = message.toJSONFor();
 
         if (!receiver) {
           io.in(`room:${socket.user.room.name}`).emit('message:add', sendMsg);
         } else {
-          let receiverUser = socket.user;
+          const { socket: receiverSocket } = await User.findById(receiver.id);
 
           if (socket.user.username !== receiver.username) {
-            // receiverUser = await User.findById(receiver.id);
-            receiverUser = receiver;
             socket.emit('message:add', sendMsg);
           }
 
-          // const receiverUser = await User.findById(receiver.id);
-          io.to(receiverUser.socket).emit('message:add', sendMsg);
+          io.to(receiverSocket).emit('message:add', sendMsg);
         }
       });
 
-      socket.on('editor:typing', (receiver = null) => {
+      socket.on('editor:typing', async (receiver = null) => {
         const key = receiver
           ? `${socket.user.username}-${receiver.username}`
           : socket.user.room.name;
-        let users;
 
         if (!typingUsers[key]) {
           typingUsers[key] = new Set();
         }
 
         typingUsers[key].add(socket.user.username);
+        const users = [...typingUsers[key]];
 
         if (receiver) {
-          users = [...typingUsers[`${socket.user.username}-${receiver.username}`]];
-          io.to(receiver.socket).emit(
-            'editor:typing',
-            users,
-            socket.user.username,
-            receiver.username,
-          );
+          const { socket: receiverSocket } = await User.findById(receiver.id);
+          io.to(receiverSocket).emit('editor:typing', users, true);
         } else {
-          users = [...typingUsers[socket.user.room.name]];
-          io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, socket.user.username);
+          io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, false);
         }
       });
 
-      socket.on('editor:stop-typing', (receiver = null) => {
+      socket.on('editor:stop-typing', async (receiver = null) => {
         const key = receiver
           ? `${socket.user.username}-${receiver.username}`
           : socket.user.room.name;
-        let users;
+
+        if (!typingUsers[key]) {
+          return;
+        }
 
         typingUsers[key].delete(socket.user.username);
+        const users = [...typingUsers[key]];
 
         if (receiver) {
-          users = [...typingUsers[`${socket.user.username}-${receiver.username}`]];
-          io.to(receiver.socket).emit(
-            'editor:typing',
-            users,
-            socket.user.username,
-            receiver.username,
-          );
+          const { socket: receiverSocket } = await User.findById(receiver.id);
+          io.to(receiverSocket).emit('editor:typing', users, true);
         } else {
-          users = [...typingUsers[socket.user.room.name]];
-          io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, socket.user.username);
+          io.in(`room:${socket.user.room.name}`).emit('editor:typing', users, false);
         }
       });
 
-      socket.on('message:edit', async message => {
-        await Message.findByIdAndUpdate(message.id, { text: message.text });
-        socket.to(`room:${socket.user.room.name}`).emit('message:edit', {
-          id: message.id,
-          text: message.text,
-        });
+      socket.on('message:edit', async msg => {
+        const message = await Message.findByIdAndUpdate(msg.id, { text: msg.text });
+        socket.to(`room:${socket.user.room.name}`).emit('message:edit', message.toSocketJSONFor());
       });
 
       socket.on('message:delete', async id => {
@@ -228,7 +175,9 @@ module.exports = io => {
         socket.to(`room:${socket.user.room.name}`).emit('message:delete', id);
       });
 
-      socket.on('member:edit', member => {
+      socket.on('member:edit', async memberId => {
+        const member = await User.findById(memberId).populate('room');
+
         io.in(`room:${socket.user.room.name}`).emit('member:edit', member);
       });
 
@@ -236,15 +185,7 @@ module.exports = io => {
         socket.user.online = false;
         await socket.user.save();
 
-        io.in(`room:${socket.user.room.name}`).emit('offline', {
-          id: socket.user._id,
-          username: socket.user.username,
-          online: socket.user.online,
-          room: {
-            id: socket.user.room._id,
-            name: socket.user.room.name,
-          },
-        });
+        io.in(`room:${socket.user.room.name}`).emit('offline', socket.user.toJSONFor());
       });
     });
   }

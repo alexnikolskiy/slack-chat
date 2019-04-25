@@ -4,7 +4,6 @@ import { htmlToElement } from 'Utils/helpers';
 class MessageNewOutput {
   constructor() {
     this.message = null;
-    this.elem = null;
   }
 
   setHandlers() {

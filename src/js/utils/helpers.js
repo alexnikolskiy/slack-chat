@@ -27,15 +27,3 @@ export const htmlToElement = html => {
 
   return template.content.firstChild;
 };
-
-export function getUserAvatar(user = null, size = 72) {
-  if (user && user.avatar) {
-    if (user.avatar.includes('http') || user.avatar.includes('avatars')) {
-      return user.avatar;
-    }
-
-    return `avatars/${user.avatar}`;
-  }
-
-  return `https://api.adorable.io/avatars/${size}/${user.username}.png`;
-}
